@@ -15,7 +15,7 @@ CatalogItemContext _createContext(BuildContext buildContext, Map<String, Object?
     buildChild: (id, [dataContext]) => const SizedBox(),
     dispatchEvent: (event) {},
     buildContext: buildContext,
-    dataContext: DataContext(path: [], dataModel: _MockDataModel(data)),
+    dataContext: DataContext(_MockDataModel(data), ''),
     getComponent: (id) => null,
     surfaceId: 'test-surface',
   );
@@ -160,15 +160,7 @@ void main() {
       final widget = MaterialApp(
         home: Scaffold(
           body: Builder(
-            builder: (context) {
-              final itemContext = CatalogItemContext(
-                data: mockData,
-                buildContext: context,
-                surface: _MockSurface(),
-                dataModel: _MockDataModel(mockData),
-              );
-              return catalogItem.widgetBuilder(itemContext);
-            },
+            builder: (context) => catalogItem.widgetBuilder(_createContext(context, mockData)),
           ),
         ),
       );
