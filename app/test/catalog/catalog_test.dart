@@ -197,15 +197,7 @@ void main() {
       final widget = MaterialApp(
         home: Scaffold(
           body: Builder(
-            builder: (context) {
-              final itemContext = CatalogItemContext(
-                data: mockData,
-                buildContext: context,
-                surface: _MockSurface(),
-                dataModel: _MockDataModel(mockData),
-              );
-              return catalogItem.widgetBuilder(itemContext);
-            },
+            builder: (context) => catalogItem.widgetBuilder(_createContext(context, mockData)),
           ),
         ),
       );

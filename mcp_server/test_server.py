@@ -169,3 +169,33 @@ def test_get_transactions_sorted_descending():
     txs = get_transactions('acc_current_001')
     for i in range(len(txs) - 1):
         assert txs[i]['date'] >= txs[i + 1]['date'], f"Transactions not sorted: {txs[i]['date']} < {txs[i + 1]['date']}"
+
+
+# Task 2.5: get_mortgage_summary Tool Tests
+def test_get_mortgage_summary_includes_required_fields():
+    """Mortgage summary should include all required fields"""
+    mtg = get_mortgage_summary('acc_mortgage_001')
+    assert 'id' in mtg
+    assert 'propertyAddress' in mtg
+    assert 'originalAmount' in mtg
+    assert 'outstandingBalance' in mtg
+    assert 'monthlyPayment' in mtg
+    assert 'interestRate' in mtg
+    assert 'rateType' in mtg
+    assert 'termEndDate' in mtg
+    assert 'nextPaymentDate' in mtg
+
+
+def test_get_mortgage_summary_rate_type_valid():
+    """Rate type should be fixed or variable"""
+    mtg = get_mortgage_summary('acc_mortgage_001')
+    assert mtg['rateType'] in {'fixed', 'variable'}
+
+
+def test_get_mortgage_summary_wrong_account_type():
+    """Should error when called on non-mortgage account"""
+    try:
+        get_mortgage_summary('acc_current_001')
+        raise AssertionError('Expected ToolError for non-mortgage account')
+    except ToolError as exc:
+        assert 'not a mortgage' in str(exc).lower()
