@@ -97,6 +97,6 @@ def build_transactions(account_id: str, count: int = 20) -> list[dict]:
 
 TRANSACTIONS = {
     "acc_current_001": build_transactions("acc_current_001", 20),
-    "acc_savings_001": build_transactions("acc_savings_001", 15),
-    "acc_credit_001": build_transactions("acc_credit_001", 12),
+    "acc_savings_001": build_transactions("acc_savings_001", 18),
+    "acc_credit_001": build_transactions("acc_credit_001", 15),
 }
