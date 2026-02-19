@@ -1,0 +1,5 @@
+[
+  {"surfaceUpdate": {"surfaceId": "main_surface", "components": [{"id": "root", "component": {"Column": {"children": {"explicitList": ["savings"]}}}}, {"id": "savings", "component": {"SavingsSummary": {"payload": {"path": "/savings"}}}}]}},
+  {"dataModelUpdate": {"surfaceId": "main_surface", "contents": []}},
+  {"beginRendering": {"surfaceId": "main_surface", "root": "root"}}
+]

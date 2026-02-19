@@ -1,0 +1,150 @@
+# Tasks: AIBank Flutter A2UI
+
+## Phase 1: Project Scaffolding
+
+- [ ] **1.1** Create Flutter app scaffold
+  Run `flutter create` for the `app/` directory targeting iOS and Android. Add dependencies to `pubspec.yaml`: `genui`, `genui_a2ui`, `a2a`, `json_schema_builder`, `logging`. Run `flutter pub get`. Verify clean build.
+  Files: `app/pubspec.yaml`, `app/lib/main.dart`
+
+- [ ] **1.2** Create Python agent directory structure
+  Create `agent/` with `agent.py`, `a2ui_schema.py`, `templates/`, `requirements.txt`, `.env.example`. Populate `requirements.txt` with `google-adk`, `mcp`, `jsonschema`, `python-dotenv`. Add `.env` to `.gitignore`.
+  Files: `agent/*`, `.gitignore`
+
+- [ ] **1.3** Create MCP server directory structure
+  Create `mcp_server/` with `server.py`, `mock_data.py`, `requirements.txt`. Populate `requirements.txt` with `mcp`.
+  Files: `mcp_server/*`
+
+## Phase 2: MCP Mock Bank Data Server
+
+- [ ] **2.1** Define mock data
+  Create static mock data in `mock_data.py`: one customer persona with at least one account per type (current, savings, credit, mortgage). Include 15-20 transactions per account. Use GBP, UK conventions, fictitious data only. Covers: mcp-bank-data spec "Mock Data Realism".
+  Files: `mcp_server/mock_data.py`
+
+- [ ] **2.2** Implement `get_accounts` tool
+  Register MCP tool that returns the account list (id, type, name, balance, currency). Covers: mcp-bank-data spec "get_accounts Tool".
+  Files: `mcp_server/server.py`
+
+- [ ] **2.3** Implement `get_account_detail` tool
+  Register MCP tool accepting `account_id`, returning full detail per account type. Return error for invalid IDs. Covers: mcp-bank-data spec "get_account_detail Tool".
+  Files: `mcp_server/server.py`
+
+- [ ] **2.4** Implement `get_transactions` tool
+  Register MCP tool accepting `account_id` and optional `limit` (default 20). Return transactions sorted by date descending. Covers: mcp-bank-data spec "get_transactions Tool".
+  Files: `mcp_server/server.py`
+
+- [ ] **2.5** Implement `get_mortgage_summary` tool
+  Register MCP tool accepting `account_id`, returning mortgage details (property address, outstanding balance, monthly payment, rates, dates). Covers: mcp-bank-data spec "get_mortgage_summary Tool".
+  Files: `mcp_server/server.py`
+
+- [ ] **2.6** Implement `get_credit_card_statement` tool
+  Register MCP tool accepting `account_id`, returning credit card details (masked number, limit, balance, available credit, minimum payment, due date, recent transactions). Covers: mcp-bank-data spec "get_credit_card_statement Tool".
+  Files: `mcp_server/server.py`
+
+- [ ] **2.7** Verify MCP server starts and tools are discoverable
+  Start MCP server, verify it responds to tool discovery. Manually test each tool with valid and invalid inputs. Covers: mcp-bank-data spec "MCP Server Startup".
+  Files: `mcp_server/server.py`
+
+## Phase 3: Backend Agent
+
+- [ ] **3.1** Create A2UI schema module
+  Copy/adapt the A2UI v0.8 JSON schema into `agent/a2ui_schema.py` for response validation. Covers: backend-agent spec "A2UI Response Generation".
+  Files: `agent/a2ui_schema.py`
+
+- [ ] **3.2** Create few-shot A2UI templates
+  Write six JSON template files (account_overview, account_detail, transaction_list, mortgage_summary, credit_card_statement, savings_summary). Each must be valid A2UI v0.8 with surfaceUpdate, dataModelUpdate, and beginRendering messages using banking catalog component names. Covers: backend-agent spec "Few-Shot A2UI Templates".
+  Files: `agent/templates/*.json`
+
+- [ ] **3.3** Implement agent with system prompt
+  Create the ADK agent in `agent.py` with GPT-5 mini model. Write the system prompt including: banking assistant persona, intent recognition instructions, `---a2ui_JSON---` delimiter convention, template rules per query type, and the A2UI schema. Register MCP tools. Covers: backend-agent specs "Agent Initialization", "Banking Intent Recognition".
+  Files: `agent/agent.py`
+
+- [ ] **3.4** Implement MCP tool integration in agent
+  Configure agent to connect to MCP server via stdio subprocess. Register MCP tools as ADK tools so the LLM can invoke them. Covers: backend-agent spec "MCP Tool Integration".
+  Files: `agent/agent.py`
+
+- [ ] **3.5** Implement A2UI response parsing and validation
+  Add post-processing to parse LLM output, extract A2UI JSON after delimiter, validate against schema, and stream as A2A DataParts with `mimeType: application/json+a2ui`. Handle invalid JSON gracefully (fall back to text). Covers: backend-agent spec "A2UI Response Generation", design edge cases.
+  Files: `agent/agent.py`
+
+- [ ] **3.6** Verify agent end-to-end with ADK web UI
+  Start MCP server + agent, use `adk web` to test queries: "show my accounts", "show transactions", "mortgage balance", "credit card statement". Verify A2UI JSON in responses.
+  Files: none (manual verification)
+
+## Phase 4: Flutter Banking Catalog
+
+- [ ] **4.1** Create AccountCard catalog item
+  Define JSON schema (accountName, accountType, balance, currency) and widget builder. Card shows name, type badge, color-coded balance. Covers: a2ui-banking-catalog spec "AccountCard Component".
+  Files: `app/lib/catalog/account_card.dart`
+
+- [ ] **4.2** Create TransactionList catalog item
+  Define JSON schema (transactions array with date, description, amount, type). Scrollable list with +/- prefixed amounts. Empty state message. Covers: a2ui-banking-catalog spec "TransactionList Component".
+  Files: `app/lib/catalog/transaction_list.dart`
+
+- [ ] **4.3** Create MortgageDetail catalog item
+  Define JSON schema (propertyAddress, outstandingBalance, monthlyPayment, interestRate, rateType, termEndDate, nextPaymentDate). Prominent balance display. Covers: a2ui-banking-catalog spec "MortgageDetail Component".
+  Files: `app/lib/catalog/mortgage_detail.dart`
+
+- [ ] **4.4** Create CreditCardSummary catalog item
+  Define JSON schema (cardNumber, creditLimit, currentBalance, availableCredit, minimumPayment, paymentDueDate). Credit utilization bar. Covers: a2ui-banking-catalog spec "CreditCardSummary Component".
+  Files: `app/lib/catalog/credit_card_summary.dart`
+
+- [ ] **4.5** Create SavingsSummary catalog item
+  Define JSON schema (accountName, balance, interestRate, interestEarned). Percentage-formatted rate. Covers: a2ui-banking-catalog spec "SavingsSummary Component".
+  Files: `app/lib/catalog/savings_summary.dart`
+
+- [ ] **4.6** Create AccountOverview catalog item
+  Define JSON schema (accounts array). Renders AccountCards in a Column with total net worth at top. Covers: a2ui-banking-catalog spec "AccountOverview Component".
+  Files: `app/lib/catalog/account_overview.dart`
+
+- [ ] **4.7** Register banking catalog
+  Create `banking_catalog.dart` that assembles all six CatalogItems plus `CoreCatalogItems` into a combined catalog list for the A2uiMessageProcessor. Covers: a2ui-banking-catalog spec "Catalog Registration".
+  Files: `app/lib/catalog/banking_catalog.dart`
+
+## Phase 5: Flutter App Integration
+
+- [ ] **5.1** Create app theme
+  Define `BankTheme` with colors (primary, positive balance green, negative balance red), typography, and card styling for mobile. Covers: design decision "Currency/locale" styling.
+  Files: `app/lib/theme/bank_theme.dart`
+
+- [ ] **5.2** Implement ChatScreen with GenUI conversation
+  Create `ChatScreen` as a StatefulWidget. Initialize `A2uiMessageProcessor` with banking catalog, `A2uiContentGenerator` with agent URL, and `GenUiConversation`. Wire text input → `sendRequest()`. Display chat messages in a ListView. Covers: flutter-client specs "GenUI Conversation Setup", "Chat-Based Interaction".
+  Files: `app/lib/screens/chat_screen.dart`
+
+- [ ] **5.3** Implement surface lifecycle management
+  Wire `onSurfaceAdded` / `onSurfaceDeleted` callbacks on `GenUiConversation`. Track surface IDs in state. Render `GenUiSurface` widgets inline in the conversation list. Covers: flutter-client spec "Surface Lifecycle Management".
+  Files: `app/lib/screens/chat_screen.dart`
+
+- [ ] **5.4** Implement user action forwarding
+  Verify that button taps and form interactions on GenUiSurface widgets are automatically forwarded by the GenUI SDK to the agent. Add error stream listener to show snackbar on failures. Covers: flutter-client spec "User Action Forwarding".
+  Files: `app/lib/screens/chat_screen.dart`
+
+- [ ] **5.5** Wire up main.dart
+  Set up `MaterialApp` with `BankTheme`, `ChatScreen` as home. Configure logging. Single-column mobile layout, no responsive breakpoints. Covers: flutter-client spec "Mobile-Only Layout".
+  Files: `app/lib/main.dart`
+
+## Phase 6: Testing
+
+- [ ] **6.1** MCP server unit tests
+  Test each tool handler with valid params (assert response shape), invalid `account_id` (assert error), and `get_transactions` with limit. Assert no real account numbers in data. Covers: all mcp-bank-data spec scenarios.
+  Files: `mcp_server/test_server.py`
+
+- [ ] **6.2** A2UI template validation tests
+  Load each template JSON file, validate against A2UI v0.8 schema. Assert each contains surfaceUpdate, dataModelUpdate, and beginRendering. Covers: backend-agent spec "Few-Shot A2UI Templates" scenario.
+  Files: `agent/test_templates.py`
+
+- [ ] **6.3** Agent intent mapping tests
+  Unit test that queries like "show my accounts", "transactions for current account", "mortgage balance" trigger the correct MCP tool call. Covers: backend-agent spec "Banking Intent Recognition" scenarios.
+  Files: `agent/test_agent.py`
+
+- [ ] **6.4** Flutter catalog widget tests
+  Widget test each catalog item builder with mock data. Assert correct widget tree structure (e.g., AccountCard contains balance Text, TransactionList shows rows). Assert empty state for TransactionList. Covers: all a2ui-banking-catalog spec scenarios.
+  Files: `app/test/catalog/`
+
+- [ ] **6.5** Flutter ChatScreen widget tests
+  Widget test surface lifecycle: mock A2uiMessageProcessor, simulate surface added/deleted, verify GenUiSurface widgets appear/disappear. Covers: flutter-client spec "Surface Lifecycle Management" scenarios.
+  Files: `app/test/screens/chat_screen_test.dart`
+
+## Phase 7: End-to-End Verification
+
+- [ ] **7.1** Manual end-to-end test
+  Start all three processes (MCP server, agent, Flutter app on emulator). Run through each query type: account overview, account detail, transactions, mortgage, credit card, savings. Verify rendered UI matches banking catalog components. Test error case (stop MCP server, send query, verify error message). Covers: all spec scenarios across all capabilities.

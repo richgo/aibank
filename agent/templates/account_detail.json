@@ -1,0 +1,5 @@
+[
+  {"surfaceUpdate": {"surfaceId": "main_surface", "components": [{"id": "root", "component": {"Column": {"children": {"explicitList": ["detail"]}}}}, {"id": "detail", "component": {"AccountCard": {"accountName": {"path": "/name"}, "accountType": {"path": "/type"}, "balance": {"path": "/balance"}, "currency": {"path": "/currency"}}}}]}},
+  {"dataModelUpdate": {"surfaceId": "main_surface", "contents": []}},
+  {"beginRendering": {"surfaceId": "main_surface", "root": "root"}}
+]

@@ -1,0 +1,5 @@
+[
+  {"surfaceUpdate": {"surfaceId": "main_surface", "components": [{"id": "root", "component": {"Column": {"children": {"explicitList": ["txs"]}}}}, {"id": "txs", "component": {"TransactionList": {"items": {"path": "/transactions"}}}}]}},
+  {"dataModelUpdate": {"surfaceId": "main_surface", "contents": []}},
+  {"beginRendering": {"surfaceId": "main_surface", "root": "root"}}
+]
