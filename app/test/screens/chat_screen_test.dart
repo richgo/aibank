@@ -48,16 +48,16 @@ void main() {
       // Test that the widget structure allows surfaces to be displayed
       await tester.pumpWidget(const MaterialApp(home: ChatScreen(enableAgent: false)));
 
-      // Find the scrollable area where surfaces and messages appear
-      final scrollable = find.byType(Scrollable);
-      expect(scrollable, findsOneWidget);
-      
       // The scroll view should be expandable to show dynamic content
       final expanded = find.ancestor(
         of: find.byType(ListView),
         matching: find.byType(Expanded),
       );
       expect(expanded, findsOneWidget);
+      
+      // Verify ListView is set up for reverse scrolling (chat-style)
+      final listView = tester.widget<ListView>(find.byType(ListView));
+      expect(listView.reverse, isTrue);
     });
   });
 }

@@ -10,10 +10,14 @@ class ChatScreen extends StatefulWidget {
     super.key,
     this.enableAgent = true,
     this.serverUrl = const String.fromEnvironment('AIBANK_AGENT_URL', defaultValue: 'http://10.0.2.2:8080'),
+    this.testProcessor,
+    this.onSurfaceListChanged,
   });
 
   final bool enableAgent;
   final String serverUrl;
+  final A2uiMessageProcessor? testProcessor;
+  final ValueChanged<List<String>>? onSurfaceListChanged;
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -33,13 +37,23 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     if (widget.enableAgent) {
-      _processor = A2uiMessageProcessor(catalogs: buildBankingCatalogs());
+      _processor = widget.testProcessor ?? A2uiMessageProcessor(catalogs: buildBankingCatalogs());
       _generator = A2uiContentGenerator(serverUrl: Uri.parse(widget.serverUrl));
       _conversation = GenUiConversation(
         contentGenerator: _generator!,
         a2uiMessageProcessor: _processor!,
-        onSurfaceAdded: (added) => setState(() => _surfaceIds.add(added.surfaceId)),
-        onSurfaceDeleted: (removed) => setState(() => _surfaceIds.remove(removed.surfaceId)),
+        onSurfaceAdded: (added) {
+          setState(() {
+            _surfaceIds.add(added.surfaceId);
+            widget.onSurfaceListChanged?.call(_surfaceIds);
+          });
+        },
+        onSurfaceDeleted: (removed) {
+          setState(() {
+            _surfaceIds.remove(removed.surfaceId);
+            widget.onSurfaceListChanged?.call(_surfaceIds);
+          });
+        },
       );
 
       _generator!.textResponseStream.listen((text) {
