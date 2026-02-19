@@ -16,7 +16,7 @@
 
 ## Phase 2: MCP Mock Bank Data Server
 
-- [ ] **2.1** Define mock data
+- [x] **2.1** Define mock data
   Create static mock data in `mock_data.py`: one customer persona with at least one account per type (current, savings, credit, mortgage). Include 15-20 transactions per account. Use GBP, UK conventions, fictitious data only. Covers: mcp-bank-data spec "Mock Data Realism".
   Files: `mcp_server/mock_data.py`
 
@@ -46,27 +46,27 @@
 
 ## Phase 3: Backend Agent
 
-- [ ] **3.1** Create A2UI schema module
+- [x] **3.1** Create A2UI schema module
   Copy/adapt the A2UI v0.8 JSON schema into `agent/a2ui_schema.py` for response validation. Covers: backend-agent spec "A2UI Response Generation".
   Files: `agent/a2ui_schema.py`
 
-- [ ] **3.2** Create few-shot A2UI templates
+- [x] **3.2** Create few-shot A2UI templates
   Write six JSON template files (account_overview, account_detail, transaction_list, mortgage_summary, credit_card_statement, savings_summary). Each must be valid A2UI v0.8 with surfaceUpdate, dataModelUpdate, and beginRendering messages using banking catalog component names. Covers: backend-agent spec "Few-Shot A2UI Templates".
   Files: `agent/templates/*.json`
 
-- [ ] **3.3** Implement agent with system prompt
+- [x] **3.3** Implement agent with system prompt
   Create the ADK agent in `agent.py` with GPT-5 mini model. Write the system prompt including: banking assistant persona, intent recognition instructions, `---a2ui_JSON---` delimiter convention, template rules per query type, and the A2UI schema. Register MCP tools. Covers: backend-agent specs "Agent Initialization", "Banking Intent Recognition".
   Files: `agent/agent.py`
 
-- [ ] **3.4** Implement MCP tool integration in agent
+- [x] **3.4** Implement MCP tool integration in agent
   Configure agent to connect to MCP server via stdio subprocess. Register MCP tools as ADK tools so the LLM can invoke them. Covers: backend-agent spec "MCP Tool Integration".
   Files: `agent/agent.py`
 
-- [ ] **3.5** Implement A2UI response parsing and validation
+- [x] **3.5** Implement A2UI response parsing and validation
   Add post-processing to parse LLM output, extract A2UI JSON after delimiter, validate against schema, and stream as A2A DataParts with `mimeType: application/json+a2ui`. Handle invalid JSON gracefully (fall back to text). Covers: backend-agent spec "A2UI Response Generation", design edge cases.
   Files: `agent/agent.py`
 
-- [ ] **3.6** Verify agent end-to-end with ADK web UI
+- [x] **3.6** Verify agent end-to-end with ADK web UI
   Start MCP server + agent, use `adk web` to test queries: "show my accounts", "show transactions", "mortgage balance", "credit card statement". Verify A2UI JSON in responses.
   Files: none (manual verification)
 
@@ -128,11 +128,11 @@
   Test each tool handler with valid params (assert response shape), invalid `account_id` (assert error), and `get_transactions` with limit. Assert no real account numbers in data. Covers: all mcp-bank-data spec scenarios.
   Files: `mcp_server/test_server.py`
 
-- [ ] **6.2** A2UI template validation tests
+- [x] **6.2** A2UI template validation tests
   Load each template JSON file, validate against A2UI v0.8 schema. Assert each contains surfaceUpdate, dataModelUpdate, and beginRendering. Covers: backend-agent spec "Few-Shot A2UI Templates" scenario.
   Files: `agent/test_templates.py`
 
-- [ ] **6.3** Agent intent mapping tests
+- [x] **6.3** Agent intent mapping tests
   Unit test that queries like "show my accounts", "transactions for current account", "mortgage balance" trigger the correct MCP tool call. Covers: backend-agent spec "Banking Intent Recognition" scenarios.
   Files: `agent/test_agent.py`
 

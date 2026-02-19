@@ -68,3 +68,30 @@ def test_credit_and_mortgage_tools():
     assert cc['cardNumber'].endswith('9021')
     mtg = get_mortgage_summary('acc_mortgage_001')
     assert mtg['rateType'] in {'fixed', 'variable'}
+
+
+# Task 2.2: get_accounts Tool Tests
+def test_get_accounts_returns_list():
+    """get_accounts should return a JSON array"""
+    accounts = get_accounts()
+    assert isinstance(accounts, list)
+    assert len(accounts) > 0
+
+
+def test_get_accounts_includes_required_fields():
+    """Each account should include id, type, name, balance, currency"""
+    accounts = get_accounts()
+    for account in accounts:
+        assert 'id' in account, f"Account missing 'id': {account}"
+        assert 'type' in account, f"Account missing 'type': {account}"
+        assert 'name' in account, f"Account missing 'name': {account}"
+        assert 'balance' in account, f"Account missing 'balance': {account}"
+        assert 'currency' in account, f"Account missing 'currency': {account}"
+
+
+def test_get_accounts_type_values():
+    """Account types should be current, savings, credit, or mortgage"""
+    accounts = get_accounts()
+    valid_types = {'current', 'savings', 'credit', 'mortgage'}
+    for account in accounts:
+        assert account['type'] in valid_types, f"Invalid account type: {account['type']}"
