@@ -95,3 +95,36 @@ def test_get_accounts_type_values():
     valid_types = {'current', 'savings', 'credit', 'mortgage'}
     for account in accounts:
         assert account['type'] in valid_types, f"Invalid account type: {account['type']}"
+
+
+# Task 2.3: get_account_detail Tool Tests
+def test_get_account_detail_current_account():
+    """Current account detail should include specific fields"""
+    detail = get_account_detail('acc_current_001')
+    assert detail['id'] == 'acc_current_001'
+    assert detail['type'] == 'current'
+    assert 'name' in detail
+    assert 'balance' in detail
+    assert 'currency' in detail
+    assert 'accountNumber' in detail
+    assert 'sortCode' in detail
+    assert 'overdraftLimit' in detail
+    assert 'customer' in detail
+
+
+def test_get_account_detail_savings_account():
+    """Savings account detail should include specific fields"""
+    detail = get_account_detail('acc_savings_001')
+    assert detail['id'] == 'acc_savings_001'
+    assert detail['type'] == 'savings'
+    assert 'interestRate' in detail
+    assert 'interestEarned' in detail
+    assert 'accountNumber' in detail
+
+
+def test_get_account_detail_includes_customer():
+    """All account details should include customer information"""
+    detail = get_account_detail('acc_current_001')
+    assert 'customer' in detail
+    assert 'id' in detail['customer']
+    assert 'name' in detail['customer']

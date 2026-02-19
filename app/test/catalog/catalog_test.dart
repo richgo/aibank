@@ -8,6 +8,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genui/genui.dart';
 
+CatalogItemContext _createContext(BuildContext buildContext, Map<String, Object?> data) {
+  return CatalogItemContext(
+    data: data,
+    id: 'test-id',
+    buildChild: (id, [dataContext]) => const SizedBox(),
+    dispatchEvent: (event) {},
+    buildContext: buildContext,
+    dataContext: DataContext(path: [], dataModel: _MockDataModel(data)),
+    getComponent: (id) => null,
+    surfaceId: 'test-surface',
+  );
+}
+
 void main() {
   group('Catalog Item Names', () {
     test('banking catalog items expose expected names', () {
@@ -33,15 +46,7 @@ void main() {
       final widget = MaterialApp(
         home: Scaffold(
           body: Builder(
-            builder: (context) {
-              final itemContext = CatalogItemContext(
-                data: mockData,
-                buildContext: context,
-                surface: _MockSurface(),
-                dataModel: _MockDataModel(mockData),
-              );
-              return catalogItem.widgetBuilder(itemContext);
-            },
+            builder: (context) => catalogItem.widgetBuilder(_createContext(context, mockData)),
           ),
         ),
       );
