@@ -72,53 +72,53 @@
 
 ## Phase 4: Flutter Banking Catalog
 
-- [ ] **4.1** Create AccountCard catalog item
+- [x] **4.1** Create AccountCard catalog item
   Define JSON schema (accountName, accountType, balance, currency) and widget builder. Card shows name, type badge, color-coded balance. Covers: a2ui-banking-catalog spec "AccountCard Component".
   Files: `app/lib/catalog/account_card.dart`
 
-- [ ] **4.2** Create TransactionList catalog item
+- [x] **4.2** Create TransactionList catalog item
   Define JSON schema (transactions array with date, description, amount, type). Scrollable list with +/- prefixed amounts. Empty state message. Covers: a2ui-banking-catalog spec "TransactionList Component".
   Files: `app/lib/catalog/transaction_list.dart`
 
-- [ ] **4.3** Create MortgageDetail catalog item
+- [x] **4.3** Create MortgageDetail catalog item
   Define JSON schema (propertyAddress, outstandingBalance, monthlyPayment, interestRate, rateType, termEndDate, nextPaymentDate). Prominent balance display. Covers: a2ui-banking-catalog spec "MortgageDetail Component".
   Files: `app/lib/catalog/mortgage_detail.dart`
 
-- [ ] **4.4** Create CreditCardSummary catalog item
+- [x] **4.4** Create CreditCardSummary catalog item
   Define JSON schema (cardNumber, creditLimit, currentBalance, availableCredit, minimumPayment, paymentDueDate). Credit utilization bar. Covers: a2ui-banking-catalog spec "CreditCardSummary Component".
   Files: `app/lib/catalog/credit_card_summary.dart`
 
-- [ ] **4.5** Create SavingsSummary catalog item
+- [x] **4.5** Create SavingsSummary catalog item
   Define JSON schema (accountName, balance, interestRate, interestEarned). Percentage-formatted rate. Covers: a2ui-banking-catalog spec "SavingsSummary Component".
   Files: `app/lib/catalog/savings_summary.dart`
 
-- [ ] **4.6** Create AccountOverview catalog item
+- [x] **4.6** Create AccountOverview catalog item
   Define JSON schema (accounts array). Renders AccountCards in a Column with total net worth at top. Covers: a2ui-banking-catalog spec "AccountOverview Component".
   Files: `app/lib/catalog/account_overview.dart`
 
-- [ ] **4.7** Register banking catalog
+- [x] **4.7** Register banking catalog
   Create `banking_catalog.dart` that assembles all six CatalogItems plus `CoreCatalogItems` into a combined catalog list for the A2uiMessageProcessor. Covers: a2ui-banking-catalog spec "Catalog Registration".
   Files: `app/lib/catalog/banking_catalog.dart`
 
 ## Phase 5: Flutter App Integration
 
-- [ ] **5.1** Create app theme
+- [x] **5.1** Create app theme
   Define `BankTheme` with colors (primary, positive balance green, negative balance red), typography, and card styling for mobile. Covers: design decision "Currency/locale" styling.
   Files: `app/lib/theme/bank_theme.dart`
 
-- [ ] **5.2** Implement ChatScreen with GenUI conversation
+- [x] **5.2** Implement ChatScreen with GenUI conversation
   Create `ChatScreen` as a StatefulWidget. Initialize `A2uiMessageProcessor` with banking catalog, `A2uiContentGenerator` with agent URL, and `GenUiConversation`. Wire text input → `sendRequest()`. Display chat messages in a ListView. Covers: flutter-client specs "GenUI Conversation Setup", "Chat-Based Interaction".
   Files: `app/lib/screens/chat_screen.dart`
 
-- [ ] **5.3** Implement surface lifecycle management
+- [x] **5.3** Implement surface lifecycle management
   Wire `onSurfaceAdded` / `onSurfaceDeleted` callbacks on `GenUiConversation`. Track surface IDs in state. Render `GenUiSurface` widgets inline in the conversation list. Covers: flutter-client spec "Surface Lifecycle Management".
   Files: `app/lib/screens/chat_screen.dart`
 
-- [ ] **5.4** Implement user action forwarding
+- [x] **5.4** Implement user action forwarding
   Verify that button taps and form interactions on GenUiSurface widgets are automatically forwarded by the GenUI SDK to the agent. Add error stream listener to show snackbar on failures. Covers: flutter-client spec "User Action Forwarding".
   Files: `app/lib/screens/chat_screen.dart`
 
-- [ ] **5.5** Wire up main.dart
+- [x] **5.5** Wire up main.dart
   Set up `MaterialApp` with `BankTheme`, `ChatScreen` as home. Configure logging. Single-column mobile layout, no responsive breakpoints. Covers: flutter-client spec "Mobile-Only Layout".
   Files: `app/lib/main.dart`
 
@@ -136,11 +136,11 @@
   Unit test that queries like "show my accounts", "transactions for current account", "mortgage balance" trigger the correct MCP tool call. Covers: backend-agent spec "Banking Intent Recognition" scenarios.
   Files: `agent/test_agent.py`
 
-- [ ] **6.4** Flutter catalog widget tests
+- [x] **6.4** Flutter catalog widget tests
   Widget test each catalog item builder with mock data. Assert correct widget tree structure (e.g., AccountCard contains balance Text, TransactionList shows rows). Assert empty state for TransactionList. Covers: all a2ui-banking-catalog spec scenarios.
   Files: `app/test/catalog/`
 
-- [ ] **6.5** Flutter ChatScreen widget tests
+- [x] **6.5** Flutter ChatScreen widget tests
   Widget test surface lifecycle: mock A2uiMessageProcessor, simulate surface added/deleted, verify GenUiSurface widgets appear/disappear. Covers: flutter-client spec "Surface Lifecycle Management" scenarios.
   Files: `app/test/screens/chat_screen_test.dart`
 
