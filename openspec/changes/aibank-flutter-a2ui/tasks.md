@@ -124,7 +124,7 @@
 
 ## Phase 6: Testing
 
-- [ ] **6.1** MCP server unit tests
+- [x] **6.1** MCP server unit tests
   Test each tool handler with valid params (assert response shape), invalid `account_id` (assert error), and `get_transactions` with limit. Assert no real account numbers in data. Covers: all mcp-bank-data spec scenarios.
   Files: `mcp_server/test_server.py`
 
