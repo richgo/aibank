@@ -20,27 +20,27 @@
   Create static mock data in `mock_data.py`: one customer persona with at least one account per type (current, savings, credit, mortgage). Include 15-20 transactions per account. Use GBP, UK conventions, fictitious data only. Covers: mcp-bank-data spec "Mock Data Realism".
   Files: `mcp_server/mock_data.py`
 
-- [ ] **2.2** Implement `get_accounts` tool
+- [x] **2.2** Implement `get_accounts` tool
   Register MCP tool that returns the account list (id, type, name, balance, currency). Covers: mcp-bank-data spec "get_accounts Tool".
   Files: `mcp_server/server.py`
 
-- [ ] **2.3** Implement `get_account_detail` tool
+- [x] **2.3** Implement `get_account_detail` tool
   Register MCP tool accepting `account_id`, returning full detail per account type. Return error for invalid IDs. Covers: mcp-bank-data spec "get_account_detail Tool".
   Files: `mcp_server/server.py`
 
-- [ ] **2.4** Implement `get_transactions` tool
+- [x] **2.4** Implement `get_transactions` tool
   Register MCP tool accepting `account_id` and optional `limit` (default 20). Return transactions sorted by date descending. Covers: mcp-bank-data spec "get_transactions Tool".
   Files: `mcp_server/server.py`
 
-- [ ] **2.5** Implement `get_mortgage_summary` tool
+- [x] **2.5** Implement `get_mortgage_summary` tool
   Register MCP tool accepting `account_id`, returning mortgage details (property address, outstanding balance, monthly payment, rates, dates). Covers: mcp-bank-data spec "get_mortgage_summary Tool".
   Files: `mcp_server/server.py`
 
-- [ ] **2.6** Implement `get_credit_card_statement` tool
+- [x] **2.6** Implement `get_credit_card_statement` tool
   Register MCP tool accepting `account_id`, returning credit card details (masked number, limit, balance, available credit, minimum payment, due date, recent transactions). Covers: mcp-bank-data spec "get_credit_card_statement Tool".
   Files: `mcp_server/server.py`
 
-- [ ] **2.7** Verify MCP server starts and tools are discoverable
+- [x] **2.7** Verify MCP server starts and tools are discoverable
   Start MCP server, verify it responds to tool discovery. Manually test each tool with valid and invalid inputs. Covers: mcp-bank-data spec "MCP Server Startup".
   Files: `mcp_server/server.py`
 

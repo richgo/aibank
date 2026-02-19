@@ -238,3 +238,76 @@ def test_get_credit_card_statement_wrong_account_type():
         raise AssertionError('Expected ToolError for non-credit account')
     except ToolError as exc:
         assert 'not a credit' in str(exc).lower()
+
+
+# Task 6.1: Additional comprehensive validation tests
+def test_no_real_account_numbers_in_mock_data():
+    """Assert no real account numbers in data - security check"""
+    for account in ACCOUNTS:
+        # Real UK account numbers would be registered with banks
+        # Our test data uses clearly fake numbers
+        if 'accountNumber' in account:
+            # All our test account numbers should be simple sequences
+            assert account['accountNumber'] in ['12345678', '87654321']
+        if 'sortCode' in account:
+            # All our test sort codes should be clearly fake
+            assert account['sortCode'] == '12-34-56'
+
+
+def test_get_transactions_invalid_account():
+    """get_transactions should error for invalid account_id"""
+    try:
+        get_transactions('invalid_account_id')
+        raise AssertionError('Expected ToolError for invalid account')
+    except ToolError as exc:
+        assert 'Account not found' in str(exc)
+
+
+def test_get_transactions_with_zero_limit():
+    """get_transactions with limit=0 should return empty list"""
+    txs = get_transactions('acc_current_001', limit=0)
+    assert len(txs) == 0
+
+
+def test_get_transactions_with_large_limit():
+    """get_transactions with large limit should return all available"""
+    txs = get_transactions('acc_current_001', limit=100)
+    # Should return all transactions (capped at what's available)
+    assert len(txs) <= 100
+    # Should return at least the minimum we have
+    assert len(txs) >= 15
+
+
+def test_mortgage_summary_invalid_account():
+    """get_mortgage_summary should error for invalid account_id"""
+    try:
+        get_mortgage_summary('invalid_account_id')
+        raise AssertionError('Expected ToolError for invalid account')
+    except ToolError as exc:
+        assert 'Account not found' in str(exc)
+
+
+def test_credit_card_statement_invalid_account():
+    """get_credit_card_statement should error for invalid account_id"""
+    try:
+        get_credit_card_statement('invalid_account_id')
+        raise AssertionError('Expected ToolError for invalid account')
+    except ToolError as exc:
+        assert 'Account not found' in str(exc)
+
+
+def test_all_tools_handle_invalid_params():
+    """All tools should gracefully handle invalid parameters"""
+    # get_account_detail with None
+    try:
+        get_account_detail(None)
+        raise AssertionError('Expected error for None account_id')
+    except (ToolError, TypeError, AttributeError):
+        pass  # Expected
+    
+    # get_transactions with None
+    try:
+        get_transactions(None)
+        raise AssertionError('Expected error for None account_id')
+    except (ToolError, TypeError, AttributeError):
+        pass  # Expected
