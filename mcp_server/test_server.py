@@ -199,3 +199,42 @@ def test_get_mortgage_summary_wrong_account_type():
         raise AssertionError('Expected ToolError for non-mortgage account')
     except ToolError as exc:
         assert 'not a mortgage' in str(exc).lower()
+
+
+# Task 2.6: get_credit_card_statement Tool Tests
+def test_get_credit_card_statement_includes_required_fields():
+    """Credit card statement should include all required fields"""
+    cc = get_credit_card_statement('acc_credit_001')
+    assert 'id' in cc
+    assert 'cardNumber' in cc
+    assert 'creditLimit' in cc
+    assert 'currentBalance' in cc
+    assert 'availableCredit' in cc
+    assert 'minimumPayment' in cc
+    assert 'paymentDueDate' in cc
+    assert 'recentTransactions' in cc
+
+
+def test_get_credit_card_statement_card_number_masked():
+    """Card number should be masked showing only last 4 digits"""
+    cc = get_credit_card_statement('acc_credit_001')
+    assert '****' in cc['cardNumber']
+    # Should end with last 4 digits
+    assert cc['cardNumber'].split()[-1].isdigit()
+
+
+def test_get_credit_card_statement_recent_transactions():
+    """Recent transactions should be included and limited"""
+    cc = get_credit_card_statement('acc_credit_001')
+    assert isinstance(cc['recentTransactions'], list)
+    # Should be limited to 5 recent transactions
+    assert len(cc['recentTransactions']) <= 5
+
+
+def test_get_credit_card_statement_wrong_account_type():
+    """Should error when called on non-credit account"""
+    try:
+        get_credit_card_statement('acc_current_001')
+        raise AssertionError('Expected ToolError for non-credit account')
+    except ToolError as exc:
+        assert 'not a credit' in str(exc).lower()

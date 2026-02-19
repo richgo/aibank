@@ -228,15 +228,7 @@ void main() {
       final widget = MaterialApp(
         home: Scaffold(
           body: Builder(
-            builder: (context) {
-              final itemContext = CatalogItemContext(
-                data: mockData,
-                buildContext: context,
-                surface: _MockSurface(),
-                dataModel: _MockDataModel(mockData),
-              );
-              return catalogItem.widgetBuilder(itemContext);
-            },
+            builder: (context) => catalogItem.widgetBuilder(_createContext(context, mockData)),
           ),
         ),
       );
@@ -264,15 +256,7 @@ void main() {
       final widget = MaterialApp(
         home: Scaffold(
           body: Builder(
-            builder: (context) {
-              final itemContext = CatalogItemContext(
-                data: mockData,
-                buildContext: context,
-                surface: _MockSurface(),
-                dataModel: _MockDataModel(mockData),
-              );
-              return catalogItem.widgetBuilder(itemContext);
-            },
+            builder: (context) => catalogItem.widgetBuilder(_createContext(context, mockData)),
           ),
         ),
       );
@@ -287,18 +271,13 @@ void main() {
   });
 }
 
-// Mock classes for CatalogItemContext
-class _MockSurface implements Surface {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
-}
-
+// Mock DataModel for testing
 class _MockDataModel implements DataModel {
   _MockDataModel(this._data);
   final Map<String, Object?> _data;
 
   @override
-  Object? get data => _data;
+  Map<String, Object?> get data => _data;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
