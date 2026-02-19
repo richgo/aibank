@@ -128,3 +128,44 @@ def test_get_account_detail_includes_customer():
     assert 'customer' in detail
     assert 'id' in detail['customer']
     assert 'name' in detail['customer']
+
+
+# Task 2.4: get_transactions Tool Tests
+def test_get_transactions_returns_array():
+    """get_transactions should return a JSON array"""
+    txs = get_transactions('acc_current_001')
+    assert isinstance(txs, list)
+
+
+def test_get_transactions_includes_required_fields():
+    """Each transaction should include required fields"""
+    txs = get_transactions('acc_current_001')
+    assert len(txs) > 0
+    for tx in txs:
+        assert 'id' in tx
+        assert 'date' in tx
+        assert 'description' in tx
+        assert 'amount' in tx
+        assert 'currency' in tx
+        assert 'type' in tx
+        assert 'runningBalance' in tx
+
+
+def test_get_transactions_type_values():
+    """Transaction types should be debit or credit"""
+    txs = get_transactions('acc_current_001')
+    for tx in txs:
+        assert tx['type'] in {'debit', 'credit'}, f"Invalid transaction type: {tx['type']}"
+
+
+def test_get_transactions_default_limit():
+    """get_transactions should default to 20 transactions"""
+    txs = get_transactions('acc_current_001')
+    assert len(txs) <= 20
+
+
+def test_get_transactions_sorted_descending():
+    """Transactions should be sorted by date descending (most recent first)"""
+    txs = get_transactions('acc_current_001')
+    for i in range(len(txs) - 1):
+        assert txs[i]['date'] >= txs[i + 1]['date'], f"Transactions not sorted: {txs[i]['date']} < {txs[i + 1]['date']}"
