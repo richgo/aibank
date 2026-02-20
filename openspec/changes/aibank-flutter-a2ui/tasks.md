@@ -2,15 +2,15 @@
 
 ## Phase 1: Project Scaffolding
 
-- [ ] **1.1** Create Flutter app scaffold
+- [x] **1.1** Create Flutter app scaffold
   Run `flutter create` for the `app/` directory targeting iOS and Android. Add dependencies to `pubspec.yaml`: `genui`, `genui_a2ui`, `a2a`, `json_schema_builder`, `logging`. Run `flutter pub get`. Verify clean build.
   Files: `app/pubspec.yaml`, `app/lib/main.dart`
 
-- [ ] **1.2** Create Python agent directory structure
+- [x] **1.2** Create Python agent directory structure
   Create `agent/` with `agent.py`, `a2ui_schema.py`, `templates/`, `requirements.txt`, `.env.example`. Populate `requirements.txt` with `google-adk`, `mcp`, `jsonschema`, `python-dotenv`. Add `.env` to `.gitignore`.
   Files: `agent/*`, `.gitignore`
 
-- [ ] **1.3** Create MCP server directory structure
+- [x] **1.3** Create MCP server directory structure
   Create `mcp_server/` with `server.py`, `mock_data.py`, `requirements.txt`. Populate `requirements.txt` with `mcp`.
   Files: `mcp_server/*`
 
