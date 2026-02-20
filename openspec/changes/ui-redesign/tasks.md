@@ -32,13 +32,13 @@
 
 ## Phase 4: Account Card Redesign
 
-- [ ] **4.1** Rewrite AccountCard as horizontal gradient card
+- [x] **4.1** Rewrite AccountCard as horizontal gradient card
   Replace the existing `app/lib/catalog/account_card.dart` implementation with a new layout: 180px width × 120px height Container with gradient background (using `BankTheme.cardGradient()`), 24px border radius (using `ClipRRect`), displaying account type icon (top-left), account name below icon, balance in large bold text (center), and account type label at bottom. This implements the "Account Card Dimensions and Layout" and "Account Card Gradient Background" spec scenarios.
 
-- [ ] **4.2** Add InkWell tap handler to AccountCard
+- [x] **4.2** Add InkWell tap handler to AccountCard
   Wrap the AccountCard content in an `InkWell` with `onTap` callback that invokes `CatalogCallbacks.onAccountTap?.call(accountName)`. Configure the InkWell with `borderRadius: BorderRadius.circular(24)` to respect card shape and `splashColor: Colors.white.withOpacity(0.3)` for ripple effect. This implements the "Account Card Tap Ripple Effect" and "Account Card Sends Agent Message on Tap" spec scenarios.
 
-- [ ] **4.3** Apply theme typography and semantic colors to AccountCard
+- [x] **4.3** Apply theme typography and semantic colors to AccountCard
   Update AccountCard text styles to use `Theme.of(context).textTheme.headlineSmall` for account name (Merriweather font), `bodyMedium` for account type, and monospace font with large size for balance amount. Apply semantic colors: success green for positive balances, error red for negative balances. This implements "Custom Typography System" and "Semantic Colors for Financial Data" spec requirements.
 
 ## Phase 5: Transaction List Redesign
