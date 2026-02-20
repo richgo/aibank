@@ -36,6 +36,10 @@ Detect and configure the appropriate executable BDD framework **before writing t
 | Flutter/Dart | **integration_test + patrol** | `integration_test/*.dart` with `patrolTest` | `flutter test integration_test/` |
 | Flutter (unit-level BDD) | **flutter_test + bdd_widget_test** | `.feature` files + step definitions | `flutter test` |
 | Go | **godog** | `.feature` files + `*_test.go` step defs | `godog` |
+| Kotlin (Android) | **Cucumber + Espresso** | `.feature` files + step defs in `androidTest/` | `./gradlew connectedAndroidTest` |
+| Kotlin (alt) | **Kakao + Kaspresso** | `*Scenario.kt` with `Scenario` DSL in `androidTest/` | `./gradlew connectedAndroidTest` |
+| Swift (iOS) | **XCTest + XCUITest** | `*UITests.swift` with BDD-named `func test…` | `xcodebuild test -scheme <Scheme> -destination 'platform=iOS Simulator,name=iPhone 16'` |
+| Swift (alt) | **Swift-BDD (Quick + Nimble)** | `*Spec.swift` with `describe`/`context`/`it` | `swift test` or `xcodebuild test` |
 | .NET | **SpecFlow + Playwright** | `.feature` files + step bindings | `dotnet test` |
 
 **Setup steps:**
