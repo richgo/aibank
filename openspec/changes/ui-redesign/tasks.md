@@ -65,16 +65,16 @@
 
 ## Phase 7: Chat Screen Integration
 
-- [ ] **7.1** Initialize catalog callback in ChatScreen
+- [x] **7.1** Initialize catalog callback in ChatScreen
   In `app/lib/screens/chat_screen.dart`, add `initState()` method that sets `CatalogCallbacks.onAccountTap = _sendMessage` (or a wrapper that calls `_sendMessage` with the formatted string "Show transactions for $accountName"`). Add cleanup in `dispose()` to set callback to null. This implements the "AccountCard Tap Triggers Agent Query" spec scenario and completes the tap-to-message data flow.
 
-- [ ] **7.2** Add ClipRRect to GenUI surface rendering
+- [x] **7.2** Add ClipRRect to GenUI surface rendering
   In ChatScreen's GenUI surface rendering code, wrap `TransactionList` surfaces with `ClipRRect(borderRadius: BorderRadius.circular(16))` to clip table edges. Ensure `AccountOverview` horizontal scroll container is wrapped in appropriate height constraint (SizedBox with height 140). This implements the "ChatScreen Renders Constrained Transaction Table" and "ChatScreen Renders Horizontal Account Card Container" spec scenarios.
 
-- [ ] **7.3** Style message bubbles with theme colors
+- [x] **7.3** Style message bubbles with theme colors
   Update the message bubble rendering in ChatScreen to apply subtle background tints: user messages with a light tint (e.g., `#F0F8F5` light green tint), AI messages with a different tint (e.g., `#FFF5F5` light coral tint or neutral gray). Add 16px border radius to message containers. This implements the "ChatScreen Message Bubble Styling" spec scenario.
 
-- [ ] **7.4** Add Swift Fox logo to AppBar
+- [x] **7.4** Add Swift Fox logo to AppBar
   In ChatScreen's AppBar, add the `BrandLogo` widget (with default 40px size) to the `leading` or `title` section. Ensure logo colors (green body, coral accents) are visible against the green AppBar background by adjusting logo rendering if needed. This implements the "Swift Fox Logo Renders in App Bar" spec scenario.
 
 ## Phase 8: Remaining Catalog Widgets Styling
