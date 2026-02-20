@@ -78,10 +78,11 @@ class DeterministicRuntime:
         if intent == "account_detail":
             account = call_tool("get_accounts")[0]
             detail = call_tool("get_account_detail", account_id=account["id"])
+            transactions = call_tool("get_transactions", account_id=account["id"], limit=10)
             return RuntimeResponse(
                 text=f"Details for {detail['name']}.",
                 template_name="account_detail.json",
-                data=detail,
+                data={**detail, "transactions": transactions},
             )
 
         accounts = call_tool("get_accounts")

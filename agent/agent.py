@@ -3,11 +3,16 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
+import uuid
 from pathlib import Path
 from typing import Any
 
 import jsonschema
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request
+from fastapi.responses import JSONResponse
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -49,7 +54,12 @@ def _load_template(name: str) -> list[dict[str, Any]]:
 
 def handle_query(message: str) -> ChatResponse:
     runtime: RuntimeResponse = get_runtime().run(message)
-    return ChatResponse(text=runtime.text, a2ui=_load_template(runtime.template_name), data=runtime.data)
+    a2ui = _load_template(runtime.template_name)
+    for item in a2ui:
+        update = item.get("dataModelUpdate")
+        if isinstance(update, dict):
+            update["contents"] = runtime.data
+    return ChatResponse(text=runtime.text, a2ui=a2ui, data=runtime.data)
 
 
 def build_a2a_parts(response: ChatResponse) -> list[dict[str, Any]]:
@@ -98,7 +108,40 @@ def _message_envelope(parts: list[dict[str, Any]], request_id: str | int | None 
     return {"jsonrpc": "2.0", "id": request_id, "result": envelope}
 
 
+def _a2a_parts(response: ChatResponse) -> list[dict[str, Any]]:
+    return build_a2a_parts(response)
+
+
+def _a2a_message(response: ChatResponse) -> dict[str, Any]:
+    return {
+        "kind": "message",
+        "role": "agent",
+        "messageId": str(uuid.uuid4()),
+        "parts": _a2a_parts(response),
+    }
+
+
+def _a2a_task(response: ChatResponse, task_id: str, context_id: str) -> dict[str, Any]:
+    return {
+        "id": task_id,
+        "contextId": context_id,
+        "kind": "task",
+        "status": {
+            "state": "completed",
+            "timestamp": str(int(time.time() * 1000)),
+            "message": _a2a_message(response),
+        },
+    }
+
+
 app = FastAPI(title="AIBank Agent")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")
@@ -162,3 +205,46 @@ def a2a_agent_card() -> dict[str, Any]:
             ]
         },
     }
+
+
+@app.get("/.well-known/agent-card.json")
+def a2a_agent_card_well_known(request: Request) -> dict[str, Any]:
+    card = a2a_agent_card()
+    card["url"] = str(request.base_url).rstrip("/")
+    card["capabilities"]["streaming"] = True
+    return card
+
+
+@app.post("/")
+async def a2a_rpc(req: Request):
+    payload = await req.json()
+    request_id = payload.get("id")
+    method = payload.get("method")
+    params = payload.get("params", {}) if isinstance(payload.get("params"), dict) else {}
+    msg = params.get("message", {}) if isinstance(params, dict) else {}
+    text = extract_a2a_user_text({"message": msg})
+    response = handle_query(text)
+
+    if method == "message/send":
+        task_id = str(uuid.uuid4())
+        context_id = str(uuid.uuid4())
+        return JSONResponse({"jsonrpc": "2.0", "id": request_id, "result": _a2a_task(response, task_id, context_id)})
+
+    if method == "message/stream":
+        task_id = str(uuid.uuid4())
+        context_id = str(uuid.uuid4())
+        task = _a2a_task(response, task_id, context_id)
+
+        def _sse():
+            yield f"data: {json.dumps({'jsonrpc': '2.0', 'id': request_id, 'result': task})}\n\n"
+
+        return StreamingResponse(_sse(), media_type="text/event-stream")
+
+    return JSONResponse(
+        {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "error": {"code": -32601, "message": f"Method not found: {method}"},
+        },
+        status_code=400,
+    )
