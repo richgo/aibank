@@ -279,6 +279,7 @@ Do not include markdown fences.
             "mortgage_summary.json",
             "credit_card_statement.json",
             "savings_summary.json",
+            "transaction_location.json",
         }
         if template_name not in allowed:
             raise RuntimeError(f"ADK runtime returned unsupported template: {template_name}")

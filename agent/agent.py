@@ -198,6 +198,7 @@ def a2a_agent_card() -> dict[str, Any]:
                         "supportedCatalogIds": [
                             "https://a2ui.org/specification/v0_8/standard_catalog_definition.json",
                             "https://aibank.local/catalogs/banking-v1.json",
+                            "https://aibank.local/catalogs/googlemaps-v1.json",
                         ],
                         "acceptsInlineCatalogs": False,
                     },
