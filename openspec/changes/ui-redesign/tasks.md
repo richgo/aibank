@@ -60,7 +60,7 @@
 
 ## Phase 6: Account Overview Horizontal Scroll
 
-- [ ] **6.1** Convert AccountOverview to horizontal ListView
+- [x] **6.1** Convert AccountOverview to horizontal ListView
   Update `app/lib/catalog/account_overview.dart` to wrap the account cards in a `SizedBox` with height 140 pixels containing a `ListView.builder` with `scrollDirection: Axis.horizontal`. Add 12px horizontal padding between cards using `itemBuilder` padding. Keep the total net worth display at the top in a vertical layout above the horizontal card list. This implements the "Multiple Account Cards in Horizontal Scroll" and "Horizontal Account Card Scroll" spec scenarios.
 
 ## Phase 7: Chat Screen Integration
