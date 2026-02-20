@@ -97,3 +97,43 @@ def call_googlemaps_tool(tool_name: str, **kwargs: Any) -> dict[str, Any] | None
     except Exception:
         # Connection error, timeout, invalid JSON, etc.
         return None
+
+
+def geocode_merchant(query: str) -> dict[str, Any] | None:
+    """
+    Geocode a merchant name to get location coordinates.
+
+    Args:
+        query: Merchant name or address to geocode
+
+    Returns:
+        Dict with 'latitude', 'longitude', 'label' if successful, else None.
+        Returns None if:
+        - MCP is not configured
+        - Geocode call fails
+        - Response is missing required fields
+        - Coordinates are out of valid range
+    """
+    result = call_googlemaps_tool("geocode", query=query)
+
+    if result is None:
+        return None
+
+    # Extract and validate coordinates
+    latitude = result.get("latitude")
+    longitude = result.get("longitude")
+
+    if latitude is None or longitude is None:
+        return None
+
+    # Validate coordinate ranges
+    if not (-90 <= latitude <= 90):
+        return None
+    if not (-180 <= longitude <= 180):
+        return None
+
+    return {
+        "latitude": latitude,
+        "longitude": longitude,
+        "label": query,  # Use the query as the label
+    }

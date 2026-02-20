@@ -239,3 +239,125 @@ def test_call_googlemaps_tool_invalid_json():
             result = call_googlemaps_tool('geocode', query='London')
 
             assert result is None
+
+
+# =============================================================================
+# Requirement: Geocode Merchant Name (googlemaps-catalog spec)
+# =============================================================================
+
+def test_geocode_merchant_success():
+    """
+    Scenario: Geocode Merchant Name
+    GIVEN a transaction with description "Tesco Superstore"
+    WHEN the agent calls the geocode tool on Google Maps MCP
+    THEN the tool returns latitude and longitude for a Tesco location
+    AND the coordinates are suitable for display in MapView
+    """
+    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
+        with patch('agent.mcp_apps.call_googlemaps_tool') as mock_call:
+            mock_call.return_value = {
+                'latitude': 51.5074,
+                'longitude': -0.1278,
+                'formatted_address': 'Tesco Superstore, London'
+            }
+
+            from agent.mcp_apps import geocode_merchant
+            result = geocode_merchant('Tesco Superstore')
+
+            # THEN coordinates are returned
+            assert result is not None
+            assert result['latitude'] == 51.5074
+            assert result['longitude'] == -0.1278
+            assert result['label'] == 'Tesco Superstore'
+
+
+def test_geocode_merchant_fails():
+    """
+    Scenario: Geocode Fails
+    GIVEN a merchant name that cannot be geocoded (e.g., "Online Purchase")
+    WHEN the agent calls the geocode tool
+    THEN the tool returns an error or empty result
+    AND the function returns None
+    """
+    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
+        with patch('agent.mcp_apps.call_googlemaps_tool') as mock_call:
+            mock_call.return_value = None
+
+            from agent.mcp_apps import geocode_merchant
+            result = geocode_merchant('Online Purchase')
+
+            assert result is None
+
+
+# Edge cases for geocode_merchant:
+# - [x] Successful geocode → returns {latitude, longitude, label}
+# - [x] Geocode fails → returns None
+# - [ ] Invalid coordinates (out of range) → returns None
+# - [ ] Missing latitude in response → returns None
+# - [ ] Missing longitude in response → returns None
+
+
+def test_geocode_merchant_invalid_latitude():
+    """
+    Edge case: Latitude out of valid range (-90 to 90)
+    """
+    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
+        with patch('agent.mcp_apps.call_googlemaps_tool') as mock_call:
+            mock_call.return_value = {
+                'latitude': 200.0,  # Invalid
+                'longitude': -0.1278,
+            }
+
+            from agent.mcp_apps import geocode_merchant
+            result = geocode_merchant('Invalid Place')
+
+            assert result is None
+
+
+def test_geocode_merchant_invalid_longitude():
+    """
+    Edge case: Longitude out of valid range (-180 to 180)
+    """
+    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
+        with patch('agent.mcp_apps.call_googlemaps_tool') as mock_call:
+            mock_call.return_value = {
+                'latitude': 51.5074,
+                'longitude': -300.0,  # Invalid
+            }
+
+            from agent.mcp_apps import geocode_merchant
+            result = geocode_merchant('Invalid Place')
+
+            assert result is None
+
+
+def test_geocode_merchant_missing_latitude():
+    """
+    Edge case: Response missing latitude field
+    """
+    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
+        with patch('agent.mcp_apps.call_googlemaps_tool') as mock_call:
+            mock_call.return_value = {
+                'longitude': -0.1278,
+            }
+
+            from agent.mcp_apps import geocode_merchant
+            result = geocode_merchant('Incomplete')
+
+            assert result is None
+
+
+def test_geocode_merchant_missing_longitude():
+    """
+    Edge case: Response missing longitude field
+    """
+    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
+        with patch('agent.mcp_apps.call_googlemaps_tool') as mock_call:
+            mock_call.return_value = {
+                'latitude': 51.5074,
+            }
+
+            from agent.mcp_apps import geocode_merchant
+            result = geocode_merchant('Incomplete')
+
+            assert result is None
