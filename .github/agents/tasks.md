@@ -7,6 +7,10 @@ handoffs:
     agent: apply
     prompt: 'Implement the tasks defined above, starting from the first unchecked item.'
     send: false
+  - label: Start Implementation (TDD Only)
+    agent: apply-tdd-only
+    prompt: 'Implement the tasks defined above using strict TDD (no BDD layer), starting from the first unchecked item.'
+    send: false
 ---
 
 # OpenSpec Tasks Agent

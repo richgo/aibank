@@ -7,6 +7,10 @@ handoffs:
     agent: apply
     prompt: 'Address the verification issues identified above.'
     send: false
+  - label: Fix Issues (TDD Only)
+    agent: apply-tdd-only
+    prompt: 'Address the verification issues identified above using strict TDD (no BDD layer).'
+    send: false
   - label: Archive Change
     agent: archive
     prompt: 'Archive this change and merge specs into the main library.'
@@ -74,4 +78,5 @@ Ready to archive: Yes / No / Yes with warnings
 
 - **DO NOT** modify any code, specs, design, or tasks.
 - **DO NOT** fix issues — only report them.
+- **DO NOT** write the verification report to a file at the repository root — output it in chat only, or write it to `openspec/changes/<change-name>/verification-report.md`.
 - Verify is advisory — it never blocks archive.

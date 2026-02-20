@@ -7,6 +7,10 @@ handoffs:
     agent: apply
     prompt: 'Implement the tasks generated above, starting from the first unchecked item.'
     send: false
+  - label: Start Implementation (TDD Only)
+    agent: apply-tdd-only
+    prompt: 'Implement the tasks generated above using strict TDD (no BDD layer), starting from the first unchecked item.'
+    send: false
   - label: Review Plan First
     agent: verify
     prompt: 'Review the planning artifacts above for completeness before implementation.'

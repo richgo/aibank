@@ -11,11 +11,12 @@ A set of GitHub Copilot custom agents implementing the [OpenSpec](https://github
 | **proposal** | Write the WHY — intent, scope, approach | read, edit, search | → specs |
 | **specs** | Write the WHAT — requirements & scenarios | read, edit, search | → design |
 | **design** | Write the HOW — technical decisions | read, edit, search | → tasks |
-| **tasks** | Write the DO — implementation checklist | read, edit, search | → apply |
-| **apply** | Execute — write code per task list | read, edit, search, execute | → verify, archive |
-| **verify** | Check — spec compliance review | read, search | → apply, archive |
+| **tasks** | Write the DO — implementation checklist | read, edit, search | → apply, apply-tdd-only |
+| **apply** | Execute — BDD scenarios → edge cases → TDD | read, edit, search, execute | → verify, archive |
+| **apply-tdd-only** | Execute — strict TDD only (no BDD layer) | read, edit, search, execute | → verify, archive |
+| **verify** | Check — spec compliance review | read, search | → apply, apply-tdd-only, archive |
 | **archive** | Close — merge specs, archive change | read, edit, search | → new, explore |
-| **ff** | Fast-forward — all planning in one pass | read, edit, search | → apply, verify |
+| **ff** | Fast-forward — all planning in one pass | read, edit, search | → apply, apply-tdd-only, verify |
 
 ## Workflow
 
@@ -36,16 +37,18 @@ A set of GitHub Copilot custom agents implementing the [OpenSpec](https://github
              │                              tasks
              └──────────────────┬──────────────────┘
                                 │
-                             apply
+                       apply or apply-tdd-only
                                 │
                              verify
                                 │
                             archive ──→ (loop back to new)
 ```
 
-**Two paths:**
-- **Fast path:** `new` → `ff` → `apply` → `archive`
-- **Incremental path:** `new` → `proposal` → `specs` → `design` → `tasks` → `apply` → `archive`
+**Two paths, two apply modes:**
+- **Fast path:** `new` → `ff` → `apply` or `apply-tdd-only` → `archive`
+- **Incremental path:** `new` → `proposal` → `specs` → `design` → `tasks` → `apply` or `apply-tdd-only` → `archive`
+
+Use `apply` (default) for BDD-first development (failing scenario → edge case analysis → TDD units → scenario green). Use `apply-tdd-only` for straight TDD without a BDD layer.
 
 Each agent presents **handoff buttons** at the end of its work, so you click through the workflow without remembering command names.
 
@@ -91,11 +94,16 @@ proposal ──[Write Specs]──────────→ specs
 specs ─────[Write Design]────────→ design
 design ────[Break Into Tasks]────→ tasks
 tasks ─────[Start Implementation]→ apply
+tasks ─────[Start Implementation (TDD Only)]→ apply-tdd-only
 
 apply ─────[Verify Against Specs]→ verify
 apply ─────[Archive Change]──────→ archive
 
+apply-tdd-only ─[Verify Against Specs]→ verify
+apply-tdd-only ─[Archive Change]──────→ archive
+
 verify ────[Fix Issues]──────────→ apply
+verify ────[Fix Issues (TDD Only)]→ apply-tdd-only
 verify ────[Archive Change]──────→ archive
 
 archive ───[Start New Change]────→ new

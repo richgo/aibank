@@ -34,11 +34,11 @@ void main() {
   });
 
   group('AccountCard Component', () {
-    testWidgets('renders account name, type, and balance with correct color', (tester) async {
+    testWidgets('renders account name, type, and balance with correct styling', (tester) async {
       final catalogItem = accountCardItem();
       final mockData = {
         'accountName': 'Main Current Account',
-        'accountType': 'Current',
+        'accountType': 'Checking',
         'balance': '1234.56',
         'currency': 'GBP',
       };
@@ -54,18 +54,23 @@ void main() {
       await tester.pumpWidget(widget);
 
       expect(find.text('Main Current Account'), findsOneWidget);
-      expect(find.text('Current'), findsOneWidget);
+      expect(find.text('Checking'), findsOneWidget);
       expect(find.text('£1234.56'), findsOneWidget);
       
-      final balanceText = tester.widget<Text>(find.text('£1234.56'));
-      expect(balanceText.style?.color, Colors.green);
+      // Check that the card has the correct dimensions
+      final sizedBox = tester.widget<SizedBox>(find.byType(SizedBox).first);
+      expect(sizedBox.width, 180);
+      expect(sizedBox.height, 120);
+      
+      // Check for account balance icon
+      expect(find.byIcon(Icons.account_balance), findsOneWidget);
     });
 
-    testWidgets('renders negative balance in red', (tester) async {
+    testWidgets('renders negative balance in coral color', (tester) async {
       final catalogItem = accountCardItem();
       final mockData = {
         'accountName': 'Overdraft Account',
-        'accountType': 'Current',
+        'accountType': 'Checking',
         'balance': '-500.00',
         'currency': 'GBP',
       };
@@ -80,10 +85,90 @@ void main() {
 
       await tester.pumpWidget(widget);
 
-      expect(find.text('£-500.00'), findsOneWidget);
+      expect(find.text('-£500.00'), findsOneWidget);
       
-      final balanceText = tester.widget<Text>(find.text('£-500.00'));
-      expect(balanceText.style?.color, Colors.red);
+      // Check that negative balance is rendered in coral color
+      final balanceText = tester.widget<Text>(find.text('-£500.00'));
+      expect(balanceText.style?.color, const Color(0xFFFF6B6B));
+    });
+
+    testWidgets('shows correct icon for different account types', (tester) async {
+      final catalogItem = accountCardItem();
+      
+      // Test savings icon
+      final savingsWidget = MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => catalogItem.widgetBuilder(_createContext(context, {
+              'accountName': 'Savings Account',
+              'accountType': 'Savings',
+              'balance': '5000.00',
+              'currency': 'GBP',
+            })),
+          ),
+        ),
+      );
+      
+      await tester.pumpWidget(savingsWidget);
+      expect(find.byIcon(Icons.savings), findsOneWidget);
+      
+      // Test credit card icon
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => catalogItem.widgetBuilder(_createContext(context, {
+              'accountName': 'Credit Card',
+              'accountType': 'Credit',
+              'balance': '-1000.00',
+              'currency': 'GBP',
+            })),
+          ),
+        ),
+      ));
+      await tester.pump();
+      expect(find.byIcon(Icons.credit_card), findsOneWidget);
+      
+      // Test mortgage icon
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => catalogItem.widgetBuilder(_createContext(context, {
+              'accountName': 'Home Loan',
+              'accountType': 'Mortgage',
+              'balance': '-250000.00',
+              'currency': 'GBP',
+            })),
+          ),
+        ),
+      ));
+      await tester.pump();
+      expect(find.byIcon(Icons.home), findsOneWidget);
+    });
+
+    testWidgets('has gradient background and proper InkWell', (tester) async {
+      final catalogItem = accountCardItem();
+      final mockData = {
+        'accountName': 'Test Account',
+        'accountType': 'Checking',
+        'balance': '100.00',
+        'currency': 'GBP',
+      };
+
+      final widget = MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => catalogItem.widgetBuilder(_createContext(context, mockData)),
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(widget);
+
+      // Check for InkWell
+      expect(find.byType(InkWell), findsOneWidget);
+      
+      // Check for gradient via Ink widget
+      expect(find.byType(Ink), findsOneWidget);
     });
   });
 
@@ -168,9 +253,12 @@ void main() {
       await tester.pumpWidget(widget);
 
       expect(find.text('123 Main St, London'), findsOneWidget);
-      expect(find.text('Outstanding: £250000.00'), findsOneWidget);
-      expect(find.text('Monthly: £1200.00'), findsOneWidget);
-      expect(find.text('Rate: 3.5% (Fixed)'), findsOneWidget);
+      expect(find.text('Outstanding Balance'), findsOneWidget);
+      expect(find.text('£250000.00'), findsOneWidget);
+      expect(find.text('Monthly Payment'), findsOneWidget);
+      expect(find.text('£1200.00'), findsOneWidget);
+      expect(find.text('Interest Rate'), findsOneWidget);
+      expect(find.text('3.5% (Fixed)'), findsOneWidget);
     });
   });
 
