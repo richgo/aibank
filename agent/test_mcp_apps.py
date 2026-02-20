@@ -3,7 +3,8 @@ BDD-style scenario tests for MCP-Apps Protocol spec.
 Each test corresponds to a Given/When/Then scenario from specs/mcp-apps-protocol/spec.md
 """
 import os
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock, AsyncMock
+import pytest
 
 
 # =============================================================================
@@ -123,3 +124,118 @@ def test_config_whitespace_url():
         config = get_mcp_apps_config()
 
         assert config.google_maps_enabled is False
+
+
+# =============================================================================
+# Requirement: Multi-MCP Server Orchestration (backend-agent spec)
+# =============================================================================
+
+def test_call_googlemaps_tool_success():
+    """
+    Scenario: Agent Connects to Google Maps MCP
+    GIVEN the agent is configured with Google Maps MCP endpoint
+    WHEN the agent calls a tool on Google Maps MCP
+    THEN the tool response is returned successfully
+    """
+    with patch.dict(os.environ, {
+        'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp',
+        'GOOGLE_MAPS_API_KEY': 'test-key'
+    }):
+        # Mock httpx response
+        with patch('agent.mcp_apps.httpx') as mock_httpx:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                'result': {
+                    'latitude': 51.5074,
+                    'longitude': -0.1278,
+                    'formatted_address': 'London, UK'
+                }
+            }
+            mock_httpx.post.return_value = mock_response
+
+            from agent.mcp_apps import call_googlemaps_tool
+            result = call_googlemaps_tool('geocode', query='London')
+
+            # THEN the result contains the geocode response
+            assert result is not None
+            assert result['latitude'] == 51.5074
+            assert result['longitude'] == -0.1278
+
+
+def test_call_googlemaps_tool_connection_error():
+    """
+    Scenario: Google Maps MCP Unavailable
+    GIVEN the agent is configured with Google Maps MCP endpoint
+    WHEN the MCP server is unreachable
+    THEN the function returns None (graceful failure)
+    AND does not raise an exception
+    """
+    with patch.dict(os.environ, {
+        'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp',
+    }):
+        with patch('agent.mcp_apps.httpx') as mock_httpx:
+            import httpx
+            mock_httpx.post.side_effect = Exception("Connection refused")
+
+            from agent.mcp_apps import call_googlemaps_tool
+            result = call_googlemaps_tool('geocode', query='London')
+
+            # THEN graceful failure - returns None
+            assert result is None
+
+
+def test_call_googlemaps_tool_not_configured():
+    """
+    Edge case: Google Maps MCP not configured
+    GIVEN no GOOGLE_MAPS_MCP_URL is set
+    WHEN call_googlemaps_tool is called
+    THEN it returns None immediately
+    """
+    with patch.dict(os.environ, {}, clear=True):
+        from agent.mcp_apps import call_googlemaps_tool
+        result = call_googlemaps_tool('geocode', query='London')
+
+        assert result is None
+
+
+# Edge cases for call_googlemaps_tool:
+# - [x] MCP not configured → returns None
+# - [x] Connection error → returns None
+# - [ ] HTTP 500 error → returns None
+# - [ ] Invalid JSON response → returns None
+# - [ ] Timeout → returns None
+
+
+def test_call_googlemaps_tool_http_error():
+    """
+    Edge case: HTTP 500 error from MCP server
+    """
+    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
+        with patch('agent.mcp_apps.httpx') as mock_httpx:
+            mock_response = MagicMock()
+            mock_response.status_code = 500
+            mock_response.json.return_value = {'error': 'Internal server error'}
+            mock_httpx.post.return_value = mock_response
+
+            from agent.mcp_apps import call_googlemaps_tool
+            result = call_googlemaps_tool('geocode', query='London')
+
+            assert result is None
+
+
+def test_call_googlemaps_tool_invalid_json():
+    """
+    Edge case: Invalid JSON response from MCP server
+    """
+    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
+        with patch('agent.mcp_apps.httpx') as mock_httpx:
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.side_effect = ValueError("Invalid JSON")
+            mock_httpx.post.return_value = mock_response
+
+            from agent.mcp_apps import call_googlemaps_tool
+            result = call_googlemaps_tool('geocode', query='London')
+
+            assert result is None

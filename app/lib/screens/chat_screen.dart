@@ -1,10 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:genui/genui.dart';
 import 'package:genui_a2ui/genui_a2ui.dart';
-import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 
 import '../catalog/banking_catalog.dart';
@@ -83,11 +80,15 @@ class _ChatScreenState extends State<ChatScreen> {
     CatalogCallbacks.onAccountTap = (accountName) {
       _sendMessage('Show transactions for $accountName');
     };
+    CatalogCallbacks.onBackToOverview = () {
+      _sendMessage('show my accounts');
+    };
   }
 
   @override
   void dispose() {
     CatalogCallbacks.onAccountTap = null;
+    CatalogCallbacks.onBackToOverview = null;
     _controller.dispose();
     _conversation?.dispose();
     _generator?.dispose();
@@ -102,7 +103,6 @@ class _ChatScreenState extends State<ChatScreen> {
     final msg = UserMessage.text(text);
     setState(() => _messages.insert(0, msg));
     _conversation?.sendRequest(msg);
-    _fetchFallbackData(text);
   }
 
   void _sendMessage(String text) {
@@ -110,33 +110,6 @@ class _ChatScreenState extends State<ChatScreen> {
     final msg = UserMessage.text(text);
     setState(() => _messages.insert(0, msg));
     _conversation?.sendRequest(msg);
-    _fetchFallbackData(text);
-  }
-
-  Future<void> _fetchFallbackData(String text) async {
-    final serverUrl = (widget.serverUrl?.trim().isNotEmpty ?? false)
-        ? widget.serverUrl!.trim()
-        : (kIsWeb
-            ? 'http://${Uri.base.host}:8080'
-            : defaultTargetPlatform == TargetPlatform.android
-                ? 'http://10.0.2.2:8080'
-                : 'http://127.0.0.1:8080');
-    try {
-      final response = await http.post(
-        Uri.parse('$serverUrl/chat'),
-        headers: {'content-type': 'application/json'},
-        body: jsonEncode({'message': text}),
-      );
-      if (response.statusCode != 200) return;
-      final payload = jsonDecode(response.body);
-      if (payload is! Map<String, dynamic>) return;
-      final data = payload['data'];
-      if (data is! Map<String, dynamic>) return;
-      final pretty = const JsonEncoder.withIndent('  ').convert(data);
-      setState(() => _messages.insert(0, AiTextMessage.text('Data:\n$pretty')));
-    } catch (error) {
-      _logger.warning('Fallback data fetch failed: $error');
-    }
   }
 
   @override
@@ -200,7 +173,10 @@ class _ChatScreenState extends State<ChatScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: SizedBox(height: 320, child: GenUiSurface(host: _processor!, surfaceId: id)),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 160, maxHeight: 560),
+                            child: GenUiSurface(host: _processor!, surfaceId: id),
+                          )
                         ),
                       )),
               ],

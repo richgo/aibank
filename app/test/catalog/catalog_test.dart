@@ -203,11 +203,11 @@ void main() {
       await tester.pumpWidget(widget);
 
       expect(find.text('Coffee Shop'), findsOneWidget);
-      expect(find.text('2024-01-15'), findsOneWidget);
+      expect(find.text('15 Jan'), findsOneWidget);
       expect(find.text('-£3.50'), findsOneWidget);
       
       expect(find.text('Salary'), findsOneWidget);
-      expect(find.text('2024-01-14'), findsOneWidget);
+      expect(find.text('14 Jan'), findsOneWidget);
       expect(find.text('+£2500.00'), findsOneWidget);
     });
 

@@ -48,7 +48,7 @@ void main() {
       expect(find.text('No transactions found'), findsOneWidget);
     });
 
-    testWidgets('renders table with header row containing Date, Description, Amount', (WidgetTester tester) async {
+    testWidgets('renders header with Transactions label', (WidgetTester tester) async {
       final item = transactionListItem();
       final mockData = {
         'items': [
@@ -59,6 +59,7 @@ void main() {
             'type': 'debit',
           },
         ],
+        'accountName': 'Everyday Current Account',
       };
 
       await tester.pumpWidget(
@@ -74,10 +75,9 @@ void main() {
         ),
       );
 
-      // Verify header text exists
-      expect(find.text('Date'), findsOneWidget);
-      expect(find.text('Description'), findsOneWidget);
-      expect(find.text('Amount'), findsOneWidget);
+      // Verify account name and back button are present
+      expect(find.text('Everyday Current Account'), findsOneWidget);
+      expect(find.text('Accounts'), findsOneWidget);
     });
 
     testWidgets('formats positive amounts with green color and + prefix', (WidgetTester tester) async {
@@ -148,7 +148,7 @@ void main() {
       expect(textWidget.style?.color, equals(const Color(0xFFD32F2F)));
     });
 
-    testWidgets('renders table with scrollable container', (WidgetTester tester) async {
+    testWidgets('renders rows in a Column layout', (WidgetTester tester) async {
       final item = transactionListItem();
       final mockData = {
         'items': [
@@ -174,11 +174,10 @@ void main() {
         ),
       );
 
-      // Verify SingleChildScrollView exists for scrolling
-      expect(find.byType(SingleChildScrollView), findsOneWidget);
-      
-      // Verify Column exists (table structure)
+      // Verify Column exists (list structure)
       expect(find.byType(Column), findsWidgets);
+      // Verify the transaction description is shown
+      expect(find.text('Transaction 1'), findsOneWidget);
     });
   });
 }

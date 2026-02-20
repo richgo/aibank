@@ -68,12 +68,17 @@ class DeterministicRuntime:
                 data={"savings": savings},
             )
         if intent == "transactions":
-            account = next(a for a in call_tool("get_accounts") if a["type"] == "current")
+            all_accounts = call_tool("get_accounts")
+            # Try to match by account name mentioned in the message
+            account = next(
+                (a for a in all_accounts if a["name"].lower() in message.lower()),
+                next((a for a in all_accounts if a["type"] == "current"), all_accounts[0])
+            )
             txs = call_tool("get_transactions", account_id=account["id"], limit=10)
             return RuntimeResponse(
-                text="Here are your latest transactions.",
+                text=f"Here are the latest transactions for {account['name']}.",
                 template_name="transaction_list.json",
-                data={"transactions": txs},
+                data={"transactions": txs, "accountName": account["name"]},
             )
         if intent == "account_detail":
             account = call_tool("get_accounts")[0]
