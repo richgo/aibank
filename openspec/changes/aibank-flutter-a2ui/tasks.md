@@ -46,29 +46,30 @@
 
 ## Phase 3: Backend Agent
 
-- [ ] **3.1** Create A2UI schema module
+- [x] **3.1** Create A2UI schema module
   Copy/adapt the A2UI v0.8 JSON schema into `agent/a2ui_schema.py` for response validation. Covers: backend-agent spec "A2UI Response Generation".
   Files: `agent/a2ui_schema.py`
 
-- [ ] **3.2** Create few-shot A2UI templates
+- [x] **3.2** Create few-shot A2UI templates
   Write six JSON template files (account_overview, account_detail, transaction_list, mortgage_summary, credit_card_statement, savings_summary). Each must be valid A2UI v0.8 with surfaceUpdate, dataModelUpdate, and beginRendering messages using banking catalog component names. Covers: backend-agent spec "Few-Shot A2UI Templates".
   Files: `agent/templates/*.json`
 
-- [ ] **3.3** Implement agent with system prompt
+- [x] **3.3** Implement agent with system prompt
   Create the ADK agent in `agent.py` with GPT-5 mini model. Write the system prompt including: banking assistant persona, intent recognition instructions, `---a2ui_JSON---` delimiter convention, template rules per query type, and the A2UI schema. Register MCP tools. Covers: backend-agent specs "Agent Initialization", "Banking Intent Recognition".
   Files: `agent/agent.py`
 
-- [ ] **3.4** Implement MCP tool integration in agent
+- [x] **3.4** Implement MCP tool integration in agent
   Configure agent to connect to MCP server via stdio subprocess. Register MCP tools as ADK tools so the LLM can invoke them. Covers: backend-agent spec "MCP Tool Integration".
   Files: `agent/agent.py`
 
-- [ ] **3.5** Implement A2UI response parsing and validation
+- [x] **3.5** Implement A2UI response parsing and validation
   Add post-processing to parse LLM output, extract A2UI JSON after delimiter, validate against schema, and stream as A2A DataParts with `mimeType: application/json+a2ui`. Handle invalid JSON gracefully (fall back to text). Covers: backend-agent spec "A2UI Response Generation", design edge cases.
   Files: `agent/agent.py`
 
-- [ ] **3.6** Verify agent end-to-end with ADK web UI
+- [x] **3.6** Verify agent end-to-end with ADK web UI
   Start MCP server + agent, use `adk web` to test queries: "show my accounts", "show transactions", "mortgage balance", "credit card statement". Verify A2UI JSON in responses.
   Files: none (manual verification)
+  **VERIFIED:** Automated via A2A protocol tests covering all query types and A2UI validation. See `agent/test_e2e_verification.py`.
 
 ## Phase 4: Flutter Banking Catalog
 
@@ -102,23 +103,23 @@
 
 ## Phase 5: Flutter App Integration
 
-- [ ] **5.1** Create app theme
+- [x] **5.1** Create app theme
   Define `BankTheme` with colors (primary, positive balance green, negative balance red), typography, and card styling for mobile. Covers: design decision "Currency/locale" styling.
   Files: `app/lib/theme/bank_theme.dart`
 
-- [ ] **5.2** Implement ChatScreen with GenUI conversation
+- [x] **5.2** Implement ChatScreen with GenUI conversation
   Create `ChatScreen` as a StatefulWidget. Initialize `A2uiMessageProcessor` with banking catalog, `A2uiContentGenerator` with agent URL, and `GenUiConversation`. Wire text input → `sendRequest()`. Display chat messages in a ListView. Covers: flutter-client specs "GenUI Conversation Setup", "Chat-Based Interaction".
   Files: `app/lib/screens/chat_screen.dart`
 
-- [ ] **5.3** Implement surface lifecycle management
+- [x] **5.3** Implement surface lifecycle management
   Wire `onSurfaceAdded` / `onSurfaceDeleted` callbacks on `GenUiConversation`. Track surface IDs in state. Render `GenUiSurface` widgets inline in the conversation list. Covers: flutter-client spec "Surface Lifecycle Management".
   Files: `app/lib/screens/chat_screen.dart`
 
-- [ ] **5.4** Implement user action forwarding
+- [x] **5.4** Implement user action forwarding
   Verify that button taps and form interactions on GenUiSurface widgets are automatically forwarded by the GenUI SDK to the agent. Add error stream listener to show snackbar on failures. Covers: flutter-client spec "User Action Forwarding".
   Files: `app/lib/screens/chat_screen.dart`
 
-- [ ] **5.5** Wire up main.dart
+- [x] **5.5** Wire up main.dart
   Set up `MaterialApp` with `BankTheme`, `ChatScreen` as home. Configure logging. Single-column mobile layout, no responsive breakpoints. Covers: flutter-client spec "Mobile-Only Layout".
   Files: `app/lib/main.dart`
 
@@ -136,13 +137,15 @@
   Unit test that queries like "show my accounts", "transactions for current account", "mortgage balance" trigger the correct MCP tool call. Covers: backend-agent spec "Banking Intent Recognition" scenarios.
   Files: `agent/test_agent.py`
 
-- [ ] **6.4** Flutter catalog widget tests
+- [x] **6.4** Flutter catalog widget tests
   Widget test each catalog item builder with mock data. Assert correct widget tree structure (e.g., AccountCard contains balance Text, TransactionList shows rows). Assert empty state for TransactionList. Covers: all a2ui-banking-catalog spec scenarios.
-  Files: `app/test/catalog/`
+  Files: `app/test/catalog/catalog_test.dart`
+  **VERIFIED:** 9 widget tests covering all 6 catalog items, all passing. See `PHASE_5_COMPLETION_REPORT.md`.
 
-- [ ] **6.5** Flutter ChatScreen widget tests
+- [x] **6.5** Flutter ChatScreen widget tests
   Widget test surface lifecycle: mock A2uiMessageProcessor, simulate surface added/deleted, verify GenUiSurface widgets appear/disappear. Covers: flutter-client spec "Surface Lifecycle Management" scenarios.
-  Files: `app/test/screens/chat_screen_test.dart`
+  Files: `app/test/screens/chat_screen_test.dart`, `app/test/screens/chat_screen_dispose_test.dart`
+  **VERIFIED:** 6 widget tests + 10 BDD scenario tests, all passing. See `PHASE_5_COMPLETION_REPORT.md`.
 
 ## Phase 7: End-to-End Verification
 
