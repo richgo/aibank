@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from mcp_server.server import call_tool
+from agent.mcp_apps import geocode_merchant
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,12 @@ class AgentRuntime(Protocol):
 class DeterministicRuntime:
     def _intent(self, message: str) -> str:
         m = message.lower()
+        # Check for transaction location intent first (more specific)
+        location_keywords = ["where", "location", "map"]
+        if any(kw in m for kw in location_keywords):
+            return "transaction_location"
+        if "show me" in m and ("shopped" in m or "spent" in m or "purchase" in m):
+            return "transaction_location"
         if "mortgage" in m:
             return "mortgage"
         if "credit" in m or "card" in m:
@@ -35,6 +42,28 @@ class DeterministicRuntime:
             return "account_detail"
         return "overview"
 
+    def _extract_merchant(
+        self, message: str, transactions: list[dict[str, Any]]
+    ) -> tuple[dict[str, Any], str] | None:
+        """
+        Find a transaction matching a merchant mentioned in the user's message.
+
+        Returns tuple of (transaction, merchant_name) or None if no match.
+        If multiple matches, returns the most recent (first in list).
+        """
+        m = message.lower()
+
+        for tx in transactions:
+            description = tx.get("description", "")
+            # Extract words from description for matching
+            desc_words = description.lower().split()
+            # Check if any significant word from description appears in message
+            for word in desc_words:
+                if len(word) > 3 and word in m:  # Skip short words
+                    return (tx, description)
+
+        return None
+
     def _net_worth(self, accounts: list[dict[str, Any]]) -> str:
         total = 0.0
         for account in accounts:
@@ -43,6 +72,56 @@ class DeterministicRuntime:
 
     def run(self, message: str) -> RuntimeResponse:
         intent = self._intent(message)
+        if intent == "transaction_location":
+            # Get transactions from current account
+            accounts = call_tool("get_accounts")
+            current_account = next(
+                (a for a in accounts if a["type"] == "current"),
+                accounts[0] if accounts else None
+            )
+            if not current_account:
+                return RuntimeResponse(
+                    text="I couldn't find any accounts.",
+                    template_name="account_overview.json",
+                    data={"accounts": [], "netWorth": "0.00"},
+                )
+
+            transactions = call_tool("get_transactions", account_id=current_account["id"], limit=20)
+
+            # Try to extract merchant from message
+            merchant_result = self._extract_merchant(message, transactions)
+
+            if merchant_result is None:
+                # No specific merchant found, show general text
+                return RuntimeResponse(
+                    text="I couldn't identify which transaction you're asking about. Please specify a merchant name.",
+                    template_name="transaction_list.json",
+                    data={"transactions": transactions},
+                )
+
+            tx, merchant_name = merchant_result
+
+            # Geocode the merchant
+            location = geocode_merchant(merchant_name)
+
+            if location is None:
+                # Geocoding failed
+                return RuntimeResponse(
+                    text=f"I couldn't find the location for {merchant_name}. This may be an online purchase or the location is unavailable.",
+                    template_name="transaction_list.json",
+                    data={"transactions": [tx]},
+                )
+
+            # Success - return transaction with location
+            return RuntimeResponse(
+                text=f"Here is where your {merchant_name} transaction occurred.",
+                template_name="transaction_location.json",
+                data={
+                    "transaction": tx,
+                    "location": location,
+                },
+            )
+
         if intent == "mortgage":
             account = next(a for a in call_tool("get_accounts") if a["type"] == "mortgage")
             mortgage = call_tool("get_mortgage_summary", account_id=account["id"])
