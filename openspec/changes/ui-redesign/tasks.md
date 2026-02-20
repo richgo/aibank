@@ -43,19 +43,19 @@
 
 ## Phase 5: Transaction List Redesign
 
-- [ ] **5.1** Build manual 3-column table layout
+- [x] **5.1** Build manual 3-column table layout
   Replace the existing `app/lib/catalog/transaction_list.dart` with a `Column` containing a header `Row` and data `Row` widgets. Use `Expanded` widgets with flex ratios (Date 25%, Description 50%, Amount 25%) to create fixed-width columns. Add 8px vertical + 12px horizontal padding to each cell. This implements the "Transaction Table Layout" spec scenario.
 
-- [ ] **5.2** Style transaction table header
+- [x] **5.2** Style transaction table header
   Create the header row with primary green background (`Theme.of(context).colorScheme.primary`), white text color, bold font weight, and column labels "Date", "Description", "Amount". This implements the "Transaction Table Header Styling" spec scenario.
 
-- [ ] **5.3** Implement alternating row backgrounds
+- [x] **5.3** Implement alternating row backgrounds
   In the data rows loop, apply white background (`#FFFFFF`) to even-indexed rows and light gray background (`#F9F9F9`) to odd-indexed rows using conditional `BoxDecoration`. This implements the "Transaction Row Alternating Backgrounds" spec scenario.
 
-- [ ] **5.4** Format and color-code transaction amounts
+- [x] **5.4** Format and color-code transaction amounts
   For the Amount column, use monospace font (JetBrains Mono or system monospace via `TextStyle(fontFamily: 'monospace')`), right-align text, and apply success green color (`#1B8A3A`) for positive amounts and error red color (`#D32F2F`) for negative amounts. Include currency symbol. This implements the "Transaction Amount Formatting and Color" spec scenario.
 
-- [ ] **5.5** Add scroll container with max height constraint
+- [x] **5.5** Add scroll container with max height constraint
   Wrap the transaction table `Column` in a `ConstrainedBox` with `maxHeight: 400`, then wrap in `SingleChildScrollView` with `scrollDirection: Axis.vertical`. Add `ClipRRect` with 16px border radius to clip edges. This implements the "Transaction Table Scroll Container" spec scenario.
 
 ## Phase 6: Account Overview Horizontal Scroll
