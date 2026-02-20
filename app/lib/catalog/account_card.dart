@@ -83,7 +83,7 @@ class AccountCard extends StatelessWidget {
             child: InkWell(
               borderRadius: BorderRadius.circular(BankTheme.cardRadius),
               splashColor: Colors.white.withValues(alpha: 0.3),
-              onTap: () => CatalogCallbacks.onAccountTap?.call(name),
+              onTap: () => CatalogCallbacks.onAccountDetailTap?.call(name),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(

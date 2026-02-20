@@ -87,7 +87,7 @@ CatalogItem transactionListItem() {
                 children: items.asMap().entries.map((entry) {
                   final tx = entry.value as Map<String, Object?>;
                   final isLast = entry.key == items.length - 1;
-                  return _TransactionRow(tx: tx, isLast: isLast);
+                  return TransactionRow(tx: tx, isLast: isLast);
                 }).toList(),
               ),
             ),
@@ -97,11 +97,11 @@ CatalogItem transactionListItem() {
   );
 }
 
-class _TransactionRow extends StatelessWidget {
+class TransactionRow extends StatelessWidget {
   final Map<String, Object?> tx;
   final bool isLast;
 
-  const _TransactionRow({required this.tx, required this.isLast});
+  const TransactionRow({required this.tx, required this.isLast});
 
   static IconData _iconFor(String desc) {
     final d = desc.toLowerCase();

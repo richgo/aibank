@@ -1,5 +1,5 @@
 [
-  {"surfaceUpdate": {"surfaceId": "main_surface", "components": [{"id": "root", "component": {"Column": {"children": {"explicitList": ["detail", "txs"]}}}}, {"id": "detail", "component": {"AccountCard": {"accountName": {"path": "/name"}, "accountType": {"path": "/type"}, "balance": {"path": "/balance"}, "currency": {"path": "/currency"}}}}, {"id": "txs", "component": {"TransactionList": {"items": {"path": "/transactions"}}}}]}},
+  {"surfaceUpdate": {"surfaceId": "main_surface", "components": [{"id": "root", "component": {"Column": {"children": {"explicitList": ["detail"]}}}}, {"id": "detail", "component": {"AccountDetailView": {"name": {"path": "/name"}, "type": {"path": "/type"}, "balance": {"path": "/balance"}, "currency": {"path": "/currency"}, "accountNumber": {"path": "/accountNumber"}, "sortCode": {"path": "/sortCode"}, "interestRate": {"path": "/interestRate"}, "overdraftLimit": {"path": "/overdraftLimit"}, "transactions": {"path": "/transactions"}}}}]}},
   {"dataModelUpdate": {"surfaceId": "main_surface", "contents": []}},
   {"beginRendering": {"surfaceId": "main_surface", "root": "root"}}
 ]

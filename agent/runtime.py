@@ -38,7 +38,9 @@ class DeterministicRuntime:
             return "savings"
         if "transaction" in m:
             return "transactions"
-        if "detail" in m or "account" in m and "show my" not in m:
+        if "detail" in m or "show details" in m:
+            return "account_detail"
+        if "account" in m and "show my" not in m:
             return "account_detail"
         return "overview"
 
@@ -160,11 +162,15 @@ class DeterministicRuntime:
                 data={"transactions": txs, "accountName": account["name"]},
             )
         if intent == "account_detail":
-            account = call_tool("get_accounts")[0]
+            all_accounts = call_tool("get_accounts")
+            account = next(
+                (a for a in all_accounts if a["name"].lower() in message.lower()),
+                next((a for a in all_accounts if a["type"] == "current"), all_accounts[0])
+            )
             detail = call_tool("get_account_detail", account_id=account["id"])
             transactions = call_tool("get_transactions", account_id=account["id"], limit=10)
             return RuntimeResponse(
-                text=f"Details for {detail['name']}.",
+                text=f"Here are the details for {detail['name']}.",
                 template_name="account_detail.json",
                 data={**detail, "transactions": transactions},
             )
