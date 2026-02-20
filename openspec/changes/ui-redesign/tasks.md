@@ -27,7 +27,7 @@
 
 ## Phase 3: Brand Logo Widget
 
-- [ ] **3.1** Create BrandLogo widget with CustomPaint
+- [x] **3.1** Create BrandLogo widget with CustomPaint
   Create `app/lib/widgets/brand_logo.dart` containing a `BrandLogo` StatelessWidget with a `CustomPainter` implementation. The painter should draw a geometric fox head: two triangle ears (forest green `#006B3D`), circular face (forest green), and coral accent details (`#FF6B6B`) for ear tips, eye highlights. The widget should accept a `size` parameter (default 40×40 logical pixels). This implements the "Swift Fox Brand Logo" spec requirement and "Swift Fox Logo Widget Component" scenario.
 
 ## Phase 4: Account Card Redesign
