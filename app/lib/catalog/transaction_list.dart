@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:json_schema_builder/json_schema_builder.dart';
 import '../theme/bank_theme.dart';
 import 'catalog_callbacks.dart';
+import 'catalog_utils.dart';
 
 CatalogItem transactionListItem() {
   final schema = S.object(
@@ -18,8 +19,8 @@ CatalogItem transactionListItem() {
     dataSchema: schema,
     widgetBuilder: (CatalogItemContext itemContext) {
       final map = itemContext.data as Map<String, Object?>;
-      final items = (map['items'] as List?) ?? const [];
-      final accountName = map['accountName'] as String? ?? 'Account';
+      final items = resolveList(itemContext.dataContext, map['items']);
+      final accountName = resolveValue<String>(itemContext.dataContext, map['accountName']) ?? 'Account';
 
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -38,6 +39,7 @@ CatalogItem transactionListItem() {
             child: Row(
               children: [
                 GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () => CatalogCallbacks.onBackToOverview?.call(),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

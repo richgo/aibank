@@ -4,6 +4,7 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 
 import '../theme/bank_theme.dart';
 import 'account_card.dart';
+import 'catalog_utils.dart';
 
 CatalogItem accountOverviewItem() {
   final schema = S.object(properties: {
@@ -16,8 +17,8 @@ CatalogItem accountOverviewItem() {
     dataSchema: schema,
     widgetBuilder: (CatalogItemContext itemContext) {
       final map = itemContext.data as Map<String, Object?>;
-      final accounts = (map['accounts'] as List?) ?? const [];
-      final netWorth = map['netWorth'] as String? ?? '0.00';
+      final accounts = resolveList(itemContext.dataContext, map['accounts']);
+      final netWorth = resolveValue<String>(itemContext.dataContext, map['netWorth']) ?? '0.00';
       
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,

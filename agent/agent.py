@@ -58,7 +58,10 @@ def handle_query(message: str) -> ChatResponse:
     for item in a2ui:
         update = item.get("dataModelUpdate")
         if isinstance(update, dict):
-            update["contents"] = [runtime.data]
+            # Pass data as a dict so DataModel uses its permissive Map path
+            # (_parseDataModelContents expects {key,valueString} format which
+            # is complex; the Map path sets _data = runtime.data directly).
+            update["contents"] = runtime.data
     return ChatResponse(text=runtime.text, a2ui=a2ui, data=runtime.data)
 
 

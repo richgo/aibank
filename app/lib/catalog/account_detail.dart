@@ -5,6 +5,7 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 
 import '../theme/bank_theme.dart';
 import 'catalog_callbacks.dart';
+import 'catalog_utils.dart';
 import 'transaction_list.dart';
 
 CatalogItem accountDetailViewItem() {
@@ -25,14 +26,15 @@ CatalogItem accountDetailViewItem() {
     dataSchema: schema,
     widgetBuilder: (CatalogItemContext itemContext) {
       final map = itemContext.data as Map<String, Object?>;
-      final name = map['name'] as String? ?? '';
-      final type = map['type'] as String? ?? '';
-      final balance = map['balance'] as String? ?? '0.00';
-      final accountNumber = map['accountNumber'] as String?;
-      final sortCode = map['sortCode'] as String?;
-      final interestRate = map['interestRate'] as String?;
-      final overdraftLimit = map['overdraftLimit'] as String?;
-      final transactions = (map['transactions'] as List?) ?? [];
+      final ctx = itemContext.dataContext;
+      final name = resolveValue<String>(ctx, map['name']) ?? '';
+      final type = resolveValue<String>(ctx, map['type']) ?? '';
+      final balance = resolveValue<String>(ctx, map['balance']) ?? '0.00';
+      final accountNumber = resolveValue<String>(ctx, map['accountNumber']);
+      final sortCode = resolveValue<String>(ctx, map['sortCode']);
+      final interestRate = resolveValue<String>(ctx, map['interestRate']);
+      final overdraftLimit = resolveValue<String>(ctx, map['overdraftLimit']);
+      final transactions = resolveList(ctx, map['transactions']);
 
       final isNegative = balance.startsWith('-');
       final displayBalance = isNegative ? balance.substring(1) : balance;
@@ -62,6 +64,7 @@ CatalogItem accountDetailViewItem() {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () => CatalogCallbacks.onBackToOverview?.call(),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     const Icon(Icons.arrow_back_ios_new, color: Colors.white70, size: 14),

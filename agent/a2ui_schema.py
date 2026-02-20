@@ -24,7 +24,9 @@ A2UI_SCHEMA = {
                         "required": ["surfaceId", "contents"],
                         "properties": {
                             "surfaceId": {"type": "string"},
-                            "contents": {"type": "array"},
+                            "contents": {
+                                "anyOf": [{"type": "array"}, {"type": "object"}]
+                            },
                         },
                     }
                 },
