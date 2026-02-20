@@ -58,7 +58,7 @@ def handle_query(message: str) -> ChatResponse:
     for item in a2ui:
         update = item.get("dataModelUpdate")
         if isinstance(update, dict):
-            update["contents"] = runtime.data
+            update["contents"] = [runtime.data]
     return ChatResponse(text=runtime.text, a2ui=a2ui, data=runtime.data)
 
 
