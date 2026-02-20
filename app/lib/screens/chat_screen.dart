@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 
 import '../catalog/banking_catalog.dart';
+import '../catalog/catalog_callbacks.dart';
+import '../widgets/brand_logo.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
@@ -73,10 +75,15 @@ class _ChatScreenState extends State<ChatScreen> {
         }
       });
     }
+
+    CatalogCallbacks.onAccountTap = (accountName) {
+      _sendMessage('Show transactions for $accountName');
+    };
   }
 
   @override
   void dispose() {
+    CatalogCallbacks.onAccountTap = null;
     _controller.dispose();
     _conversation?.dispose();
     _generator?.dispose();
@@ -88,6 +95,14 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     _controller.clear();
+    final msg = UserMessage.text(text);
+    setState(() => _messages.insert(0, msg));
+    _conversation?.sendRequest(msg);
+    _fetchFallbackData(text);
+  }
+
+  void _sendMessage(String text) {
+    if (text.isEmpty) return;
     final msg = UserMessage.text(text);
     setState(() => _messages.insert(0, msg));
     _conversation?.sendRequest(msg);
@@ -119,7 +134,16 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('AIBank')),
+      appBar: AppBar(
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const BrandLogo(size: 32),
+            const SizedBox(width: 10),
+            Text('AIBank', style: Theme.of(context).appBarTheme.titleTextStyle),
+          ],
+        ),
+      ),
       body: Column(
         children: [
           Expanded(
@@ -131,15 +155,46 @@ class _ChatScreenState extends State<ChatScreen> {
                     title: Text('Ask: "show my accounts"'),
                     subtitle: Text('If nothing appears, start the backend agent at http://127.0.0.1:8080.'),
                   ),
-                ..._messages.map((m) => ListTile(title: Text(switch (m) {
-                  UserMessage(:final parts) => parts.whereType<TextPart>().map((e) => e.text).join('\n'),
-                  AiTextMessage(:final parts) => parts.whereType<TextPart>().map((e) => e.text).join('\n'),
-                  AiUiMessage(:final parts) => parts.whereType<TextPart>().map((e) => e.text).join('\n'),
-                  _ => '',
-                }))),
+                ..._messages.map((m) {
+                  final isUser = m is UserMessage;
+                  final text = switch (m) {
+                    UserMessage(:final parts) => parts.whereType<TextPart>().map((e) => e.text).join('\n'),
+                    AiTextMessage(:final parts) => parts.whereType<TextPart>().map((e) => e.text).join('\n'),
+                    AiUiMessage(:final parts) => parts.whereType<TextPart>().map((e) => e.text).join('\n'),
+                    _ => '',
+                  };
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Align(
+                      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isUser ? const Color(0xFFE8F5E9) : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: isUser ? null : [
+                            const BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Text(text),
+                      ),
+                    ),
+                  );
+                }),
                 ..._surfaceIds.map((id) => _processor == null
                     ? const SizedBox.shrink()
-                    : SizedBox(height: 320, child: GenUiSurface(host: _processor!, surfaceId: id))),
+                    : Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: SizedBox(height: 320, child: GenUiSurface(host: _processor!, surfaceId: id)),
+                        ),
+                      )),
               ],
             ),
           ),
