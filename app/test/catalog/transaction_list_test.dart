@@ -79,5 +79,106 @@ void main() {
       expect(find.text('Description'), findsOneWidget);
       expect(find.text('Amount'), findsOneWidget);
     });
+
+    testWidgets('formats positive amounts with green color and + prefix', (WidgetTester tester) async {
+      final item = transactionListItem();
+      final mockData = {
+        'items': [
+          {
+            'date': '2024-01-15',
+            'description': 'Salary',
+            'amount': '2500.00',
+            'type': 'credit',
+          },
+        ],
+      };
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (BuildContext context) {
+                final catalogContext = _createContext(context, mockData);
+                return item.widgetBuilder(catalogContext);
+              },
+            ),
+          ),
+        ),
+      );
+
+      // Find the amount text
+      expect(find.text('+£2500.00'), findsOneWidget);
+      
+      // Verify it has the correct color (BankTheme.positive)
+      final textWidget = tester.widget<Text>(find.text('+£2500.00'));
+      expect(textWidget.style?.color, equals(const Color(0xFF1B8A3A)));
+    });
+
+    testWidgets('formats negative amounts with red color and - prefix', (WidgetTester tester) async {
+      final item = transactionListItem();
+      final mockData = {
+        'items': [
+          {
+            'date': '2024-01-15',
+            'description': 'Coffee Shop',
+            'amount': '3.50',
+            'type': 'debit',
+          },
+        ],
+      };
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (BuildContext context) {
+                final catalogContext = _createContext(context, mockData);
+                return item.widgetBuilder(catalogContext);
+              },
+            ),
+          ),
+        ),
+      );
+
+      // Find the amount text
+      expect(find.text('-£3.50'), findsOneWidget);
+      
+      // Verify it has the correct color (BankTheme.negative)
+      final textWidget = tester.widget<Text>(find.text('-£3.50'));
+      expect(textWidget.style?.color, equals(const Color(0xFFD32F2F)));
+    });
+
+    testWidgets('renders table with scrollable container', (WidgetTester tester) async {
+      final item = transactionListItem();
+      final mockData = {
+        'items': [
+          {
+            'date': '2024-01-15',
+            'description': 'Transaction 1',
+            'amount': '100.00',
+            'type': 'credit',
+          },
+        ],
+      };
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (BuildContext context) {
+                final catalogContext = _createContext(context, mockData);
+                return item.widgetBuilder(catalogContext);
+              },
+            ),
+          ),
+        ),
+      );
+
+      // Verify SingleChildScrollView exists for scrolling
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
+      
+      // Verify Column exists (table structure)
+      expect(find.byType(Column), findsWidgets);
+    });
   });
 }
