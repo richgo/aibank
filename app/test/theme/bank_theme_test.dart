@@ -1,14 +1,17 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aibank_app/theme/bank_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 void main() {
-  // Initialize Flutter test bindings for GoogleFonts
-  TestWidgetsFlutterBinding.ensureInitialized();
-  
-  // Configure GoogleFonts for testing to avoid HTTP requests
-  GoogleFonts.config.allowRuntimeFetching = false;
+  setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    GoogleFonts.config.allowRuntimeFetching = true;
+    
+    // Ensure HttpOverrides uses the default HTTP client for font fetching
+    HttpOverrides.global = null;
+  });
 
   group('BankTheme Color Constants', () {
     test('primaryGreen should be #006B3D', () {

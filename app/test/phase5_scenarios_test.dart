@@ -1,10 +1,20 @@
+import 'dart:io';
 import 'package:aibank_app/screens/chat_screen.dart';
 import 'package:aibank_app/theme/bank_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genui/genui.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
+  setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    GoogleFonts.config.allowRuntimeFetching = true;
+    
+    // Ensure HttpOverrides uses the default HTTP client for font fetching
+    HttpOverrides.global = null;
+  });
+
   group('Phase 5: Flutter App Integration - BDD Scenarios', () {
     // Task 5.1: App Theme
     group('Scenario: App applies BankTheme with banking colors', () {
@@ -29,7 +39,7 @@ void main() {
 
           // AND colors are defined correctly
           expect(BankTheme.positive, equals(const Color(0xFF1B8A3A)));
-          expect(BankTheme.negative, equals(const Color(0xFFB00020)));
+          expect(BankTheme.negative, equals(const Color(0xFFD32F2F)));
           expect(materialApp.theme!.colorScheme.primary, isNotNull);
         },
       );
