@@ -149,3 +149,17 @@
 - [x] **7.1** Manual end-to-end test
   Start all three processes (MCP server, agent, Flutter app on emulator). Run through each query type: account overview, account detail, transactions, mortgage, credit card, savings. Verify rendered UI matches banking catalog components. Test error case (stop MCP server, send query, verify error message). Covers: all spec scenarios across all capabilities.
   **VERIFIED:** Backend fully tested (37 unit tests + live API verification), Flutter code verified (14 widget tests + clean analysis). See `e2e_verification_report.md` for details. Emulator testing blocked by Android embedding config.
+
+## Phase 8: ADK Runtime & A2A Hardening
+
+- [ ] **8.1** Verify ADK runtime with GPT-5 mini
+  Run and verify `AGENT_RUNTIME=adk` against a configured GPT-5 mini-backed ADK environment. Confirm tool invocation, A2UI JSON output, and streaming behaviour match deterministic runtime parity.
+  Files: `agent/runtime.py`, `agent/agent.py`
+
+- [ ] **8.2** Add ADK runtime integration tests
+  Add integration tests that exercise ADK runtime with a real model response contract. Cover tool call round-trips, A2UI schema validation of live responses, and error/timeout handling.
+  Files: `agent/test_runtime.py`
+
+- [ ] **8.3** Tighten A2A contract fields
+  Tighten A2A contract fields further to exactly match target orchestrator/client implementation. Audit `POST /a2a/message/stream`, `POST /a2a/message`, and `GET /a2a/agent-card` response schemas against the A2A spec.
+  Files: `agent/agent.py`
