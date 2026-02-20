@@ -10,19 +10,19 @@
 
 ## Phase 2: Theme System Overhaul
 
-- [ ] **2.1** Define new ColorScheme in BankTheme
+- [x] **2.1** Define new ColorScheme in BankTheme
   Update `app/lib/theme/bank_theme.dart` to replace the existing ColorScheme with the new palette: primary green `#006B3D`, accent coral `#FF6B6B`, background `#F5F5F5`, surface white `#FFFFFF`, text `#1A1A1A`, success green `#1B8A3A`, error red `#D32F2F`. This implements the "Modern Theme Color Palette" spec requirements for primary, accent, and semantic colors.
 
-- [ ] **2.2** Add custom typography using GoogleFonts
+- [x] **2.2** Add custom typography using GoogleFonts
   In `app/lib/theme/bank_theme.dart`, update the TextTheme to use `GoogleFonts.merriweather()` for headline styles (headlineLarge, headlineMedium, headlineSmall) and `GoogleFonts.inter()` for body styles (bodyLarge, bodyMedium, bodySmall), with appropriate fallbacks (Georgia, system sans-serif). This implements the "Custom Typography System" spec requirement for headers and body text.
 
-- [ ] **2.3** Define design token constants
+- [x] **2.3** Define design token constants
   Add static constants to `BankTheme` class for design tokens: border radii (`cardRadius = 24.0`, `panelRadius = 16.0`, `buttonRadius = 8.0`), elevation levels (`elevationResting = 2.0`, `elevationInteractive = 4.0`, `elevationModal = 8.0`), and spacing (`spacing = 16.0`, `spacingCompact = 12.0`, `spacingSpacious = 24.0`). This implements the "Design Token System" spec for consistent spacing, radii, and elevation.
 
-- [ ] **2.4** Add gradient helper methods
+- [x] **2.4** Add gradient helper methods
   Add static methods to `BankTheme` for gradient definitions: `cardGradient()` returning `LinearGradient` from `#006B3D` to `#00A86B` (top-left to bottom-right), and `lightGradient()` for lighter green tints. These support the "Account Card Gradient Background" spec requirement.
 
-- [ ] **2.5** Update CardTheme and AppBarTheme
+- [x] **2.5** Update CardTheme and AppBarTheme
   In `BankTheme`, configure `CardTheme` with 16px border radius, elevation 2dp, and white surface color. Configure `AppBarTheme` with primary green background, white foreground, and elevation 0. This implements the "Modern Theme Color Palette" spec for app elements and the "Design Token System" spec for card styling.
 
 ## Phase 3: Brand Logo Widget
