@@ -45,7 +45,11 @@ class _ChatScreenState extends State<ChatScreen> {
     if (widget.enableAgent) {
       final serverUrl = (widget.serverUrl?.trim().isNotEmpty ?? false)
           ? widget.serverUrl!.trim()
-          : (kIsWeb ? 'http://${Uri.base.host}:8080' : 'http://10.0.2.2:8080');
+          : (kIsWeb
+              ? 'http://${Uri.base.host}:8080'
+              : defaultTargetPlatform == TargetPlatform.android
+                  ? 'http://10.0.2.2:8080'
+                  : 'http://127.0.0.1:8080');
       _processor = widget.testProcessor ?? A2uiMessageProcessor(catalogs: buildBankingCatalogs());
       _generator = A2uiContentGenerator(serverUrl: Uri.parse(serverUrl));
       _conversation = GenUiConversation(
@@ -112,7 +116,11 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _fetchFallbackData(String text) async {
     final serverUrl = (widget.serverUrl?.trim().isNotEmpty ?? false)
         ? widget.serverUrl!.trim()
-        : (kIsWeb ? 'http://${Uri.base.host}:8080' : 'http://10.0.2.2:8080');
+        : (kIsWeb
+            ? 'http://${Uri.base.host}:8080'
+            : defaultTargetPlatform == TargetPlatform.android
+                ? 'http://10.0.2.2:8080'
+                : 'http://127.0.0.1:8080');
     try {
       final response = await http.post(
         Uri.parse('$serverUrl/chat'),

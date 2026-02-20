@@ -1,17 +1,42 @@
-# aibank_app
+# AIBank App
 
-A new Flutter project.
+Flutter mobile/desktop app that renders AI-generated banking UI using the GenUI/A2UI protocol.
 
-## Getting Started
+## Prerequisites
 
-This project is a starting point for a Flutter application.
+- Flutter SDK 3.3+ (`flutter doctor` to verify)
+- Agent backend running on port 8080 — see [agent/README.md](../agent/README.md)
 
-A few resources to get you started if this is your first Flutter project:
+## Starting the app
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+# Install dependencies
+flutter pub get
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# Run (pick a connected device or emulator when prompted)
+flutter run
+
+# Or target a specific device
+flutter run -d linux       # Linux desktop
+flutter run -d chrome      # Web
+flutter run -d <emulator>  # Android/iOS emulator
+```
+
+> **Important:** start the agent backend first or the app will not be able to fetch banking data.
+
+## Agent URL
+
+The app automatically selects the backend URL based on the target platform:
+
+| Platform | Default URL |
+|---|---|
+| Android emulator | `http://10.0.2.2:8080` |
+| iOS / desktop / web | `http://127.0.0.1:8080` |
+
+Pass a custom URL via `ChatScreen(serverUrl: '...')` if needed.
+
+## Running tests
+
+```bash
+flutter test
+```
