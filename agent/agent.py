@@ -220,9 +220,33 @@ async def a2a_rpc(req: Request):
     payload = await req.json()
     request_id = payload.get("id")
     method = payload.get("method")
+    
+    # Check method first before attempting to extract text
+    if method not in ["message/send", "message/stream"]:
+        return JSONResponse(
+            {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {"code": -32601, "message": f"Method not found: {method}"},
+            },
+            status_code=400,
+        )
+    
     params = payload.get("params", {}) if isinstance(payload.get("params"), dict) else {}
     msg = params.get("message", {}) if isinstance(params, dict) else {}
-    text = extract_a2a_user_text({"message": msg})
+    
+    try:
+        text = extract_a2a_user_text({"message": msg})
+    except ValueError as exc:
+        return JSONResponse(
+            {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "error": {"code": -32602, "message": f"Invalid params: {exc}"},
+            },
+            status_code=400,
+        )
+    
     response = handle_query(text)
 
     if method == "message/send":
@@ -239,12 +263,3 @@ async def a2a_rpc(req: Request):
             yield f"data: {json.dumps({'jsonrpc': '2.0', 'id': request_id, 'result': task})}\n\n"
 
         return StreamingResponse(_sse(), media_type="text/event-stream")
-
-    return JSONResponse(
-        {
-            "jsonrpc": "2.0",
-            "id": request_id,
-            "error": {"code": -32601, "message": f"Method not found: {method}"},
-        },
-        status_code=400,
-    )
