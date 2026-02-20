@@ -322,14 +322,14 @@ void main() {
   });
 
   group('AccountOverview Component', () {
-    testWidgets('renders net worth and account list', (tester) async {
+    testWidgets('renders net worth header and horizontal account cards', (tester) async {
       final catalogItem = accountOverviewItem();
       final mockData = {
         'netWorth': '15234.56',
         'accounts': [
-          {'name': 'Current', 'balance': '1234.56'},
-          {'name': 'Savings', 'balance': '10000.00'},
-          {'name': 'Credit Card', 'balance': '-4000.00'},
+          {'name': 'Current', 'balance': '1234.56', 'accountType': 'Checking'},
+          {'name': 'My Savings', 'balance': '10000.00', 'accountType': 'Savings'},
+          {'name': 'Credit Card', 'balance': '-4000.00', 'accountType': 'Credit'},
         ],
       };
 
@@ -343,10 +343,19 @@ void main() {
 
       await tester.pumpWidget(widget);
 
-      expect(find.text('Net worth: £15234.56'), findsOneWidget);
-      expect(find.text('Current: £1234.56'), findsOneWidget);
-      expect(find.text('Savings: £10000.00'), findsOneWidget);
-      expect(find.text('Credit Card: £-4000.00'), findsOneWidget);
+      // Check net worth header
+      expect(find.text('Net Worth'), findsOneWidget);
+      expect(find.text('£15234.56'), findsOneWidget);
+      
+      // Check account cards are rendered
+      expect(find.text('Current'), findsOneWidget);
+      expect(find.text('My Savings'), findsOneWidget);
+      expect(find.text('Credit Card'), findsOneWidget);
+      
+      // Check account types are displayed
+      expect(find.text('Checking'), findsOneWidget);
+      expect(find.text('Savings'), findsOneWidget);
+      expect(find.text('Credit'), findsOneWidget);
     });
   });
 }
