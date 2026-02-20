@@ -72,31 +72,31 @@
 
 ## Phase 4: Flutter Banking Catalog
 
-- [ ] **4.1** Create AccountCard catalog item
+- [x] **4.1** Create AccountCard catalog item
   Define JSON schema (accountName, accountType, balance, currency) and widget builder. Card shows name, type badge, color-coded balance. Covers: a2ui-banking-catalog spec "AccountCard Component".
   Files: `app/lib/catalog/account_card.dart`
 
-- [ ] **4.2** Create TransactionList catalog item
+- [x] **4.2** Create TransactionList catalog item
   Define JSON schema (transactions array with date, description, amount, type). Scrollable list with +/- prefixed amounts. Empty state message. Covers: a2ui-banking-catalog spec "TransactionList Component".
   Files: `app/lib/catalog/transaction_list.dart`
 
-- [ ] **4.3** Create MortgageDetail catalog item
+- [x] **4.3** Create MortgageDetail catalog item
   Define JSON schema (propertyAddress, outstandingBalance, monthlyPayment, interestRate, rateType, termEndDate, nextPaymentDate). Prominent balance display. Covers: a2ui-banking-catalog spec "MortgageDetail Component".
   Files: `app/lib/catalog/mortgage_detail.dart`
 
-- [ ] **4.4** Create CreditCardSummary catalog item
+- [x] **4.4** Create CreditCardSummary catalog item
   Define JSON schema (cardNumber, creditLimit, currentBalance, availableCredit, minimumPayment, paymentDueDate). Credit utilization bar. Covers: a2ui-banking-catalog spec "CreditCardSummary Component".
   Files: `app/lib/catalog/credit_card_summary.dart`
 
-- [ ] **4.5** Create SavingsSummary catalog item
+- [x] **4.5** Create SavingsSummary catalog item
   Define JSON schema (accountName, balance, interestRate, interestEarned). Percentage-formatted rate. Covers: a2ui-banking-catalog spec "SavingsSummary Component".
   Files: `app/lib/catalog/savings_summary.dart`
 
-- [ ] **4.6** Create AccountOverview catalog item
+- [x] **4.6** Create AccountOverview catalog item
   Define JSON schema (accounts array). Renders AccountCards in a Column with total net worth at top. Covers: a2ui-banking-catalog spec "AccountOverview Component".
   Files: `app/lib/catalog/account_overview.dart`
 
-- [ ] **4.7** Register banking catalog
+- [x] **4.7** Register banking catalog
   Create `banking_catalog.dart` that assembles all six CatalogItems plus `CoreCatalogItems` into a combined catalog list for the A2uiMessageProcessor. Covers: a2ui-banking-catalog spec "Catalog Registration".
   Files: `app/lib/catalog/banking_catalog.dart`
 
