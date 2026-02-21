@@ -28,12 +28,13 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _logger = Logger('ChatScreen');
   final _controller = TextEditingController();
-  final List<ChatMessage> _messages = [];
-  final List<String> _surfaceIds = [];
+  final _scrollController = ScrollController();
+  final List<_ChatEntry> _entries = [];
 
   A2uiMessageProcessor? _processor;
   A2uiContentGenerator? _generator;
   GenUiConversation? _conversation;
+  String? _activeSurfaceId;
 
   @override
   void initState() {
@@ -53,20 +54,28 @@ class _ChatScreenState extends State<ChatScreen> {
         a2uiMessageProcessor: _processor!,
         onSurfaceAdded: (added) {
           setState(() {
-            _surfaceIds.add(added.surfaceId);
-            widget.onSurfaceListChanged?.call(_surfaceIds);
+            _activeSurfaceId = added.surfaceId;
+            // Add surface entry after the latest AI text
+            _entries.add(_ChatEntry.surface(added.surfaceId));
+            widget.onSurfaceListChanged?.call([added.surfaceId]);
           });
+          _scrollToBottom();
         },
         onSurfaceDeleted: (removed) {
           setState(() {
-            _surfaceIds.remove(removed.surfaceId);
-            widget.onSurfaceListChanged?.call(_surfaceIds);
+            if (_activeSurfaceId == removed.surfaceId) {
+              _activeSurfaceId = null;
+            }
+            widget.onSurfaceListChanged?.call(
+              _activeSurfaceId != null ? [_activeSurfaceId!] : [],
+            );
           });
         },
       );
 
       _generator!.textResponseStream.listen((text) {
-        setState(() => _messages.insert(0, AiTextMessage.text(text)));
+        setState(() => _entries.add(_ChatEntry.aiText(text)));
+        _scrollToBottom();
       });
       _generator!.errorStream.listen((error) {
         _logger.warning(error.error);
@@ -80,26 +89,39 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     _conversation?.dispose();
     _generator?.dispose();
     _processor?.dispose();
     super.dispose();
   }
 
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
   void _send() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     _controller.clear();
-    final msg = UserMessage.text(text);
-    setState(() => _messages.insert(0, msg));
-    _conversation?.sendRequest(msg);
+    setState(() => _entries.add(_ChatEntry.user(text)));
+    _conversation?.sendRequest(UserMessage.text(text));
+    _scrollToBottom();
   }
 
   void _sendMessage(String text) {
     if (text.isEmpty) return;
-    final msg = UserMessage.text(text);
-    setState(() => _messages.insert(0, msg));
-    _conversation?.sendRequest(msg);
+    setState(() => _entries.add(_ChatEntry.user(text)));
+    _conversation?.sendRequest(UserMessage.text(text));
+    _scrollToBottom();
   }
 
   @override
@@ -118,58 +140,67 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ListView(
-              reverse: true,
-              children: [
-                if (_messages.isEmpty && _surfaceIds.isEmpty)
-                  const ListTile(
+            child: ListView.builder(
+              controller: _scrollController,
+              itemCount: _entries.isEmpty ? 1 : _entries.length,
+              itemBuilder: (context, index) {
+                if (_entries.isEmpty) {
+                  return const ListTile(
                     title: Text('Ask: "show my accounts"'),
                     subtitle: Text('If nothing appears, start the backend agent at http://127.0.0.1:8080.'),
-                  ),
-                ..._messages.map((m) {
-                  final isUser = m is UserMessage;
-                  final text = switch (m) {
-                    UserMessage(:final parts) => parts.whereType<TextPart>().map((e) => e.text).join('\n'),
-                    AiTextMessage(:final parts) => parts.whereType<TextPart>().map((e) => e.text).join('\n'),
-                    AiUiMessage(:final parts) => parts.whereType<TextPart>().map((e) => e.text).join('\n'),
-                    _ => '',
-                  };
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Align(
-                      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isUser ? const Color(0xFFE8F5E9) : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: isUser ? null : [
-                            const BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Text(text),
-                      ),
-                    ),
                   );
-                }),
-                ..._surfaceIds.map((id) => _processor == null
-                    ? const SizedBox.shrink()
-                    : Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(minHeight: 160, maxHeight: 560),
-                            child: GenUiSurface(host: _processor!, surfaceId: id),
-                          )
+                }
+                final entry = _entries[index];
+                switch (entry.type) {
+                  case _EntryType.user:
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Container(
+                          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F5E9),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(entry.text!),
                         ),
-                      )),
-              ],
+                      ),
+                    );
+                  case _EntryType.aiText:
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: const [
+                              BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+                            ],
+                          ),
+                          child: Text(entry.text!),
+                        ),
+                      ),
+                    );
+                  case _EntryType.surface:
+                    if (_processor == null) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 100, maxHeight: 560),
+                          child: GenUiSurface(host: _processor!, surfaceId: entry.surfaceId!),
+                        ),
+                      ),
+                    );
+                }
+              },
             ),
           ),
           SafeArea(
@@ -197,4 +228,17 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
+}
+
+enum _EntryType { user, aiText, surface }
+
+class _ChatEntry {
+  final _EntryType type;
+  final String? text;
+  final String? surfaceId;
+
+  const _ChatEntry._(this.type, {this.text, this.surfaceId});
+  factory _ChatEntry.user(String text) => _ChatEntry._(_EntryType.user, text: text);
+  factory _ChatEntry.aiText(String text) => _ChatEntry._(_EntryType.aiText, text: text);
+  factory _ChatEntry.surface(String id) => _ChatEntry._(_EntryType.surface, surfaceId: id);
 }

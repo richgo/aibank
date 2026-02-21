@@ -8,25 +8,12 @@
           "component": {
             "Column": {
               "children": {
-                "explicitList": ["backButton", "name", "balance", "rateDisplay"]
+                "explicitList": [
+                  "name",
+                  "balance",
+                  "rateDisplay"
+                ]
               }
-            }
-          }
-        },
-        {
-          "id": "backButton",
-          "component": {
-            "Button": {
-              "child": "backButtonText",
-              "action": {"name": "backToOverview"}
-            }
-          }
-        },
-        {
-          "id": "backButtonText",
-          "component": {
-            "Text": {
-              "text": {"literalString": "← Accounts"}
             }
           }
         },
@@ -34,7 +21,9 @@
           "id": "name",
           "component": {
             "Text": {
-              "text": {"path": "/name"},
+              "text": {
+                "path": "/name"
+              },
               "usageHint": "h3"
             }
           }
@@ -43,7 +32,9 @@
           "id": "balance",
           "component": {
             "Text": {
-              "text": {"path": "/balanceDisplay"},
+              "text": {
+                "path": "/balanceDisplay"
+              },
               "usageHint": "h2"
             }
           }
@@ -52,7 +43,9 @@
           "id": "rateDisplay",
           "component": {
             "Text": {
-              "text": {"path": "/rateDisplay"},
+              "text": {
+                "path": "/rateDisplay"
+              },
               "usageHint": "body"
             }
           }
@@ -60,6 +53,16 @@
       ]
     }
   },
-  {"dataModelUpdate": {"surfaceId": "main_surface", "contents": []}},
-  {"beginRendering": {"surfaceId": "main_surface", "root": "root"}}
+  {
+    "dataModelUpdate": {
+      "surfaceId": "main_surface",
+      "contents": []
+    }
+  },
+  {
+    "beginRendering": {
+      "surfaceId": "main_surface",
+      "root": "root"
+    }
+  }
 ]

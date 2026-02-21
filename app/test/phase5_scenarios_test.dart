@@ -125,8 +125,6 @@ void main() {
 
           // THEN the ListView structure exists to display surfaces
           expect(find.byType(ListView), findsOneWidget);
-          final listView = tester.widget<ListView>(find.byType(ListView));
-          expect(listView.reverse, isTrue); // Chat-style layout
 
           // AND initially no surfaces when agent disabled
           expect(find.byType(GenUiSurface), findsNothing);

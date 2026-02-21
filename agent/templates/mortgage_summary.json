@@ -8,25 +8,15 @@
           "component": {
             "Column": {
               "children": {
-                "explicitList": ["backButton", "title", "balanceRow", "paymentRow", "rateRow", "termRow", "nextPayRow"]
+                "explicitList": [
+                  "title",
+                  "balanceRow",
+                  "paymentRow",
+                  "rateRow",
+                  "termRow",
+                  "nextPayRow"
+                ]
               }
-            }
-          }
-        },
-        {
-          "id": "backButton",
-          "component": {
-            "Button": {
-              "child": "backButtonText",
-              "action": {"name": "backToOverview"}
-            }
-          }
-        },
-        {
-          "id": "backButtonText",
-          "component": {
-            "Text": {
-              "text": {"literalString": "← Accounts"}
             }
           }
         },
@@ -34,7 +24,9 @@
           "id": "title",
           "component": {
             "Text": {
-              "text": {"path": "/propertyAddress"},
+              "text": {
+                "path": "/propertyAddress"
+              },
               "usageHint": "h3"
             }
           }
@@ -44,7 +36,10 @@
           "component": {
             "Row": {
               "children": {
-                "explicitList": ["balanceLabel", "balanceValue"]
+                "explicitList": [
+                  "balanceLabel",
+                  "balanceValue"
+                ]
               },
               "distribution": "spaceBetween",
               "alignment": "center"
@@ -55,7 +50,9 @@
           "id": "balanceLabel",
           "component": {
             "Text": {
-              "text": {"literalString": "Outstanding Balance"},
+              "text": {
+                "literalString": "Outstanding Balance"
+              },
               "usageHint": "caption"
             }
           }
@@ -64,7 +61,9 @@
           "id": "balanceValue",
           "component": {
             "Text": {
-              "text": {"path": "/balanceDisplay"},
+              "text": {
+                "path": "/balanceDisplay"
+              },
               "usageHint": "h5"
             }
           }
@@ -74,7 +73,10 @@
           "component": {
             "Row": {
               "children": {
-                "explicitList": ["paymentLabel", "paymentValue"]
+                "explicitList": [
+                  "paymentLabel",
+                  "paymentValue"
+                ]
               },
               "distribution": "spaceBetween",
               "alignment": "center"
@@ -85,7 +87,9 @@
           "id": "paymentLabel",
           "component": {
             "Text": {
-              "text": {"literalString": "Monthly Payment"},
+              "text": {
+                "literalString": "Monthly Payment"
+              },
               "usageHint": "caption"
             }
           }
@@ -94,7 +98,9 @@
           "id": "paymentValue",
           "component": {
             "Text": {
-              "text": {"path": "/paymentDisplay"},
+              "text": {
+                "path": "/paymentDisplay"
+              },
               "usageHint": "h5"
             }
           }
@@ -104,7 +110,10 @@
           "component": {
             "Row": {
               "children": {
-                "explicitList": ["rateLabel", "rateValue"]
+                "explicitList": [
+                  "rateLabel",
+                  "rateValue"
+                ]
               },
               "distribution": "spaceBetween",
               "alignment": "center"
@@ -115,7 +124,9 @@
           "id": "rateLabel",
           "component": {
             "Text": {
-              "text": {"literalString": "Interest Rate"},
+              "text": {
+                "literalString": "Interest Rate"
+              },
               "usageHint": "caption"
             }
           }
@@ -124,7 +135,9 @@
           "id": "rateValue",
           "component": {
             "Text": {
-              "text": {"path": "/rateDisplay"},
+              "text": {
+                "path": "/rateDisplay"
+              },
               "usageHint": "body"
             }
           }
@@ -134,7 +147,10 @@
           "component": {
             "Row": {
               "children": {
-                "explicitList": ["termLabel", "termValue"]
+                "explicitList": [
+                  "termLabel",
+                  "termValue"
+                ]
               },
               "distribution": "spaceBetween",
               "alignment": "center"
@@ -145,7 +161,9 @@
           "id": "termLabel",
           "component": {
             "Text": {
-              "text": {"literalString": "Term End Date"},
+              "text": {
+                "literalString": "Term End Date"
+              },
               "usageHint": "caption"
             }
           }
@@ -154,7 +172,9 @@
           "id": "termValue",
           "component": {
             "Text": {
-              "text": {"path": "/termEndDate"},
+              "text": {
+                "path": "/termEndDate"
+              },
               "usageHint": "body"
             }
           }
@@ -164,7 +184,10 @@
           "component": {
             "Row": {
               "children": {
-                "explicitList": ["nextPayLabel", "nextPayValue"]
+                "explicitList": [
+                  "nextPayLabel",
+                  "nextPayValue"
+                ]
               },
               "distribution": "spaceBetween",
               "alignment": "center"
@@ -175,7 +198,9 @@
           "id": "nextPayLabel",
           "component": {
             "Text": {
-              "text": {"literalString": "Next Payment"},
+              "text": {
+                "literalString": "Next Payment"
+              },
               "usageHint": "caption"
             }
           }
@@ -184,7 +209,9 @@
           "id": "nextPayValue",
           "component": {
             "Text": {
-              "text": {"path": "/nextPaymentDate"},
+              "text": {
+                "path": "/nextPaymentDate"
+              },
               "usageHint": "body"
             }
           }
@@ -192,6 +219,16 @@
       ]
     }
   },
-  {"dataModelUpdate": {"surfaceId": "main_surface", "contents": []}},
-  {"beginRendering": {"surfaceId": "main_surface", "root": "root"}}
+  {
+    "dataModelUpdate": {
+      "surfaceId": "main_surface",
+      "contents": []
+    }
+  },
+  {
+    "beginRendering": {
+      "surfaceId": "main_surface",
+      "root": "root"
+    }
+  }
 ]

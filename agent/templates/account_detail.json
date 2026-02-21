@@ -8,25 +8,8 @@
           "component": {
             "Column": {
               "children": {
-                "explicitList": ["backButton", "accountHeader", "detailsSection", "txHeader", "txList"]
+                "explicitList": ["accountHeader", "detailsSection", "txHeader", "txList"]
               }
-            }
-          }
-        },
-        {
-          "id": "backButton",
-          "component": {
-            "Button": {
-              "child": "backButtonText",
-              "action": {"name": "backToOverview"}
-            }
-          }
-        },
-        {
-          "id": "backButtonText",
-          "component": {
-            "Text": {
-              "text": {"literalString": "← Accounts"}
             }
           }
         },

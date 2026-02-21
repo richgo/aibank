@@ -8,25 +8,11 @@
           "component": {
             "Column": {
               "children": {
-                "explicitList": ["backButton", "headerRow", "txList"]
+                "explicitList": [
+                  "headerRow",
+                  "txList"
+                ]
               }
-            }
-          }
-        },
-        {
-          "id": "backButton",
-          "component": {
-            "Button": {
-              "child": "backButtonText",
-              "action": {"name": "backToOverview"}
-            }
-          }
-        },
-        {
-          "id": "backButtonText",
-          "component": {
-            "Text": {
-              "text": {"literalString": "← Accounts"}
             }
           }
         },
@@ -35,7 +21,10 @@
           "component": {
             "Row": {
               "children": {
-                "explicitList": ["headerName", "txCount"]
+                "explicitList": [
+                  "headerName",
+                  "txCount"
+                ]
               },
               "distribution": "spaceBetween",
               "alignment": "center"
@@ -46,7 +35,9 @@
           "id": "headerName",
           "component": {
             "Text": {
-              "text": {"path": "/accountName"},
+              "text": {
+                "path": "/accountName"
+              },
               "usageHint": "h4"
             }
           }
@@ -55,7 +46,9 @@
           "id": "txCount",
           "component": {
             "Text": {
-              "text": {"path": "/transactionCount"},
+              "text": {
+                "path": "/transactionCount"
+              },
               "usageHint": "caption"
             }
           }
@@ -80,7 +73,10 @@
           "component": {
             "Row": {
               "children": {
-                "explicitList": ["txDesc", "txAmount"]
+                "explicitList": [
+                  "txDesc",
+                  "txAmount"
+                ]
               },
               "distribution": "spaceBetween",
               "alignment": "center"
@@ -92,7 +88,10 @@
           "component": {
             "Column": {
               "children": {
-                "explicitList": ["txDescription", "txDate"]
+                "explicitList": [
+                  "txDescription",
+                  "txDate"
+                ]
               }
             }
           }
@@ -101,7 +100,9 @@
           "id": "txDescription",
           "component": {
             "Text": {
-              "text": {"path": "/description"},
+              "text": {
+                "path": "/description"
+              },
               "usageHint": "body"
             }
           }
@@ -110,7 +111,9 @@
           "id": "txDate",
           "component": {
             "Text": {
-              "text": {"path": "/formattedDate"},
+              "text": {
+                "path": "/formattedDate"
+              },
               "usageHint": "caption"
             }
           }
@@ -119,7 +122,9 @@
           "id": "txAmount",
           "component": {
             "Text": {
-              "text": {"path": "/amountDisplay"},
+              "text": {
+                "path": "/amountDisplay"
+              },
               "usageHint": "h5"
             }
           }
@@ -127,6 +132,16 @@
       ]
     }
   },
-  {"dataModelUpdate": {"surfaceId": "main_surface", "contents": []}},
-  {"beginRendering": {"surfaceId": "main_surface", "root": "root"}}
+  {
+    "dataModelUpdate": {
+      "surfaceId": "main_surface",
+      "contents": []
+    }
+  },
+  {
+    "beginRendering": {
+      "surfaceId": "main_surface",
+      "root": "root"
+    }
+  }
 ]

@@ -38,10 +38,6 @@ void main() {
       expect(find.byType(AppBar), findsOneWidget);
       expect(find.byType(ListView), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
-      
-      // The ListView uses reverse: true for chat-style layout
-      final listView = tester.widget<ListView>(find.byType(ListView));
-      expect(listView.reverse, isTrue);
     });
 
     testWidgets('surfaces would appear in the scrollable list', (tester) async {
@@ -54,10 +50,6 @@ void main() {
         matching: find.byType(Expanded),
       );
       expect(expanded, findsOneWidget);
-      
-      // Verify ListView is set up for reverse scrolling (chat-style)
-      final listView = tester.widget<ListView>(find.byType(ListView));
-      expect(listView.reverse, isTrue);
     });
   });
 }
