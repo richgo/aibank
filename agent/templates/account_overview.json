@@ -43,8 +43,8 @@
               "action": {
                 "name": "selectAccount",
                 "context": [
-                  {"key": "accountName", "value": {"path": "/name"}},
-                  {"key": "accountId", "value": {"path": "/id"}}
+                  {"key": "accountName", "value": {"path": "name"}},
+                  {"key": "accountId", "value": {"path": "id"}}
                 ]
               }
             }
@@ -76,7 +76,7 @@
           "id": "accountName",
           "component": {
             "Text": {
-              "text": {"path": "/name"},
+              "text": {"path": "name"},
               "usageHint": "h5"
             }
           }
@@ -85,7 +85,7 @@
           "id": "accountType",
           "component": {
             "Text": {
-              "text": {"path": "/type"},
+              "text": {"path": "type"},
               "usageHint": "caption"
             }
           }
@@ -94,7 +94,7 @@
           "id": "accountBalance",
           "component": {
             "Text": {
-              "text": {"path": "/balance"},
+              "text": {"path": "balance"},
               "usageHint": "h5"
             }
           }

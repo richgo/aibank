@@ -118,7 +118,7 @@
           "id": "txDescription",
           "component": {
             "Text": {
-              "text": {"path": "/description"},
+              "text": {"path": "description"},
               "usageHint": "body"
             }
           }
@@ -127,7 +127,7 @@
           "id": "txDate",
           "component": {
             "Text": {
-              "text": {"path": "/formattedDate"},
+              "text": {"path": "formattedDate"},
               "usageHint": "caption"
             }
           }
@@ -136,7 +136,7 @@
           "id": "txAmount",
           "component": {
             "Text": {
-              "text": {"path": "/amountDisplay"},
+              "text": {"path": "amountDisplay"},
               "usageHint": "h5"
             }
           }

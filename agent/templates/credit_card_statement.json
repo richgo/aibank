@@ -261,7 +261,7 @@
           "component": {
             "Text": {
               "text": {
-                "path": "/description"
+                "path": "description"
               },
               "usageHint": "body"
             }
@@ -272,7 +272,7 @@
           "component": {
             "Text": {
               "text": {
-                "path": "/formattedDate"
+                "path": "formattedDate"
               },
               "usageHint": "caption"
             }
@@ -283,7 +283,7 @@
           "component": {
             "Text": {
               "text": {
-                "path": "/amountDisplay"
+                "path": "amountDisplay"
               },
               "usageHint": "h5"
             }
