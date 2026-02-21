@@ -191,9 +191,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     if (_processor == null) return const SizedBox.shrink();
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: GenUiSurface(host: _processor!, surfaceId: entry.surfaceId!),
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.7,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: GenUiSurface(host: _processor!, surfaceId: entry.surfaceId!),
+                        ),
                       ),
                     );
                 }

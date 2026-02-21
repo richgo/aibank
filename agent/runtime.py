@@ -40,7 +40,9 @@ class DeterministicRuntime:
             return "transactions"
         if "detail" in m or "show details" in m:
             return "account_detail"
-        if "account" in m and "show my" not in m:
+        if any(w in m for w in ["all account", "my account", "accounts", "overview"]):
+            return "overview"
+        if "account" in m:
             return "account_detail"
         return "overview"
 
