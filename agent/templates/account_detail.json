@@ -146,7 +146,7 @@
           "id": "txDate",
           "component": {
             "Text": {
-              "text": {"path": "/date"},
+              "text": {"path": "/formattedDate"},
               "usageHint": "caption"
             }
           }

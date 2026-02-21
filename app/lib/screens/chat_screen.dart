@@ -5,7 +5,6 @@ import 'package:genui_a2ui/genui_a2ui.dart';
 import 'package:logging/logging.dart';
 
 import '../catalog/banking_catalog.dart';
-import '../catalog/catalog_callbacks.dart';
 import '../widgets/brand_logo.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -76,15 +75,10 @@ class _ChatScreenState extends State<ChatScreen> {
         }
       });
     }
-
-    CatalogCallbacks.onBackToOverview = () {
-      _sendMessage('show my accounts');
-    };
   }
 
   @override
   void dispose() {
-    CatalogCallbacks.onBackToOverview = null;
     _controller.dispose();
     _conversation?.dispose();
     _generator?.dispose();

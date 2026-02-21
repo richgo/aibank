@@ -1,5 +1,132 @@
 [
-  {"surfaceUpdate": {"surfaceId": "main_surface", "components": [{"id": "root", "component": {"Column": {"children": {"explicitList": ["txs"]}}}}, {"id": "txs", "component": {"TransactionList": {"items": {"path": "/transactions"}, "accountName": {"path": "/accountName"}}}}]}},
+  {
+    "surfaceUpdate": {
+      "surfaceId": "main_surface",
+      "components": [
+        {
+          "id": "root",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["backButton", "headerRow", "txList"]
+              }
+            }
+          }
+        },
+        {
+          "id": "backButton",
+          "component": {
+            "Button": {
+              "child": "backButtonText",
+              "action": {"name": "backToOverview"}
+            }
+          }
+        },
+        {
+          "id": "backButtonText",
+          "component": {
+            "Text": {
+              "text": {"literalString": "← Accounts"}
+            }
+          }
+        },
+        {
+          "id": "headerRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["headerName", "txCount"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "headerName",
+          "component": {
+            "Text": {
+              "text": {"path": "/accountName"},
+              "usageHint": "h4"
+            }
+          }
+        },
+        {
+          "id": "txCount",
+          "component": {
+            "Text": {
+              "text": {"path": "/transactionCount"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "txList",
+          "component": {
+            "List": {
+              "children": {
+                "template": {
+                  "componentId": "txRow",
+                  "dataBinding": "/transactions"
+                }
+              },
+              "direction": "vertical",
+              "alignment": "stretch"
+            }
+          }
+        },
+        {
+          "id": "txRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["txDesc", "txAmount"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "txDesc",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["txDescription", "txDate"]
+              }
+            }
+          }
+        },
+        {
+          "id": "txDescription",
+          "component": {
+            "Text": {
+              "text": {"path": "/description"},
+              "usageHint": "body"
+            }
+          }
+        },
+        {
+          "id": "txDate",
+          "component": {
+            "Text": {
+              "text": {"path": "/formattedDate"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "txAmount",
+          "component": {
+            "Text": {
+              "text": {"path": "/amountDisplay"},
+              "usageHint": "h5"
+            }
+          }
+        }
+      ]
+    }
+  },
   {"dataModelUpdate": {"surfaceId": "main_surface", "contents": []}},
   {"beginRendering": {"surfaceId": "main_surface", "root": "root"}}
 ]

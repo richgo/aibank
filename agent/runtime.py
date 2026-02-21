@@ -72,6 +72,29 @@ class DeterministicRuntime:
             total += float(account["balance"])
         return f"{total:.2f}"
 
+    _MONTHS = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    @staticmethod
+    def _format_date(date_str: str) -> str:
+        """Format 'YYYY-MM-DD' to 'DD Mon'."""
+        try:
+            parts = date_str.split('-')
+            if len(parts) == 3:
+                month = int(parts[1])
+                return f"{parts[2]} {DeterministicRuntime._MONTHS[month]}"
+        except (ValueError, IndexError):
+            pass
+        return date_str
+
+    @staticmethod
+    def _format_transactions(transactions: list[dict[str, Any]]) -> None:
+        """Add display-ready fields to each transaction (mutates in place)."""
+        for tx in transactions:
+            amt = tx.get("amount", "0.00")
+            tx["amountDisplay"] = f"-£{amt}" if tx.get("type") == "debit" else f"+£{amt}"
+            tx["formattedDate"] = DeterministicRuntime._format_date(tx.get("date", ""))
+
     @staticmethod
     def _format_detail_data(
         detail: dict[str, Any], transactions: list[dict[str, Any]]
@@ -93,13 +116,7 @@ class DeterministicRuntime:
             parts.append(f"Overdraft: £{detail['overdraftLimit']}")
         detail_line = " · ".join(parts) if parts else ""
 
-        # Format transaction amounts for display
-        for tx in transactions:
-            amt = tx.get("amount", "0.00")
-            if tx.get("type") == "debit":
-                tx["amountDisplay"] = f"-£{amt}"
-            else:
-                tx["amountDisplay"] = f"£{amt}"
+        DeterministicRuntime._format_transactions(transactions)
 
         return {
             **detail,
@@ -107,6 +124,44 @@ class DeterministicRuntime:
             "typeLabel": acct_type.title(),
             "detailLine": detail_line,
             "transactions": transactions,
+        }
+
+    @staticmethod
+    def _format_mortgage_data(mortgage: dict[str, Any]) -> dict[str, Any]:
+        """Prepare mortgage data with display-ready fields."""
+        return {
+            **mortgage,
+            "balanceDisplay": f"£{mortgage.get('outstandingBalance', '0.00')}",
+            "paymentDisplay": f"£{mortgage.get('monthlyPayment', '0.00')}",
+            "rateDisplay": f"{mortgage.get('interestRate', '')}% ({mortgage.get('rateType', '')})",
+            "originalDisplay": f"£{mortgage.get('originalAmount', '0.00')}",
+        }
+
+    @staticmethod
+    def _format_credit_data(credit: dict[str, Any]) -> dict[str, Any]:
+        """Prepare credit card data with display-ready fields."""
+        limit_val = float(credit.get("creditLimit", 0))
+        balance_val = abs(float(credit.get("currentBalance", 0)))
+        utilization = int(balance_val / limit_val * 100) if limit_val else 0
+        txs = credit.get("recentTransactions", [])
+        DeterministicRuntime._format_transactions(txs)
+        return {
+            **credit,
+            "balanceDisplay": f"£{credit.get('currentBalance', '0.00')}",
+            "availableDisplay": f"£{credit.get('availableCredit', '0.00')}",
+            "limitDisplay": f"£{credit.get('creditLimit', '0.00')}",
+            "utilizationDisplay": f"{utilization}% of limit used",
+            "minimumPaymentDisplay": f"£{credit.get('minimumPayment', '0.00')}",
+            "transactions": txs,
+        }
+
+    @staticmethod
+    def _format_savings_data(savings: dict[str, Any]) -> dict[str, Any]:
+        """Prepare savings data with display-ready fields."""
+        return {
+            **savings,
+            "balanceDisplay": f"£{savings.get('balance', '0.00')}",
+            "rateDisplay": f"Interest rate: {savings.get('interestRate', '')}%",
         }
 
     def run(self, message: str) -> RuntimeResponse:
@@ -162,10 +217,15 @@ class DeterministicRuntime:
 
             if merchant_result is None:
                 # No specific merchant found, show general text
+                self._format_transactions(transactions)
                 return RuntimeResponse(
                     text="I couldn't identify which transaction you're asking about. Please specify a merchant name.",
                     template_name="transaction_list.json",
-                    data={"transactions": transactions},
+                    data={
+                        "transactions": transactions,
+                        "accountName": current_account.get("name", "Account"),
+                        "transactionCount": f"{len(transactions)} transactions",
+                    },
                 )
 
             tx, merchant_name = merchant_result
@@ -175,10 +235,15 @@ class DeterministicRuntime:
 
             if location is None:
                 # Geocoding failed
+                self._format_transactions([tx])
                 return RuntimeResponse(
                     text=f"I couldn't find the location for {merchant_name}. This may be an online purchase or the location is unavailable.",
                     template_name="transaction_list.json",
-                    data={"transactions": [tx]},
+                    data={
+                        "transactions": [tx],
+                        "accountName": current_account.get("name", "Account"),
+                        "transactionCount": "1 transaction",
+                    },
                 )
 
             # Success - return transaction with location
@@ -194,26 +259,29 @@ class DeterministicRuntime:
         if intent == "mortgage":
             account = next(a for a in call_tool("get_accounts") if a["type"] == "mortgage")
             mortgage = call_tool("get_mortgage_summary", account_id=account["id"])
+            data = self._format_mortgage_data(mortgage)
             return RuntimeResponse(
                 text="Here is your mortgage summary.",
                 template_name="mortgage_summary.json",
-                data={"mortgage": mortgage},
+                data=data,
             )
         if intent == "credit":
             account = next(a for a in call_tool("get_accounts") if a["type"] == "credit")
             credit = call_tool("get_credit_card_statement", account_id=account["id"])
+            data = self._format_credit_data(credit)
             return RuntimeResponse(
                 text="Here is your credit card statement.",
                 template_name="credit_card_statement.json",
-                data={"credit": credit},
+                data=data,
             )
         if intent == "savings":
             account = next(a for a in call_tool("get_accounts") if a["type"] == "savings")
             savings = call_tool("get_account_detail", account_id=account["id"])
+            data = self._format_savings_data(savings)
             return RuntimeResponse(
                 text="Here is your savings account summary.",
                 template_name="savings_summary.json",
-                data={"savings": savings},
+                data=data,
             )
         if intent == "transactions":
             all_accounts = call_tool("get_accounts")
@@ -223,10 +291,15 @@ class DeterministicRuntime:
                 next((a for a in all_accounts if a["type"] == "current"), all_accounts[0])
             )
             txs = call_tool("get_transactions", account_id=account["id"], limit=10)
+            self._format_transactions(txs)
             return RuntimeResponse(
                 text=f"Here are the latest transactions for {account['name']}.",
                 template_name="transaction_list.json",
-                data={"transactions": txs, "accountName": account["name"]},
+                data={
+                    "transactions": txs,
+                    "accountName": account["name"],
+                    "transactionCount": f"{len(txs)} transactions",
+                },
             )
         if intent == "account_detail":
             all_accounts = call_tool("get_accounts")

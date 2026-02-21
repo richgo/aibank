@@ -1,5 +1,65 @@
 [
-  {"surfaceUpdate": {"surfaceId": "main_surface", "components": [{"id": "root", "component": {"Column": {"children": {"explicitList": ["savings"]}}}}, {"id": "savings", "component": {"SavingsSummary": {"payload": {"path": "/savings"}}}}]}},
+  {
+    "surfaceUpdate": {
+      "surfaceId": "main_surface",
+      "components": [
+        {
+          "id": "root",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["backButton", "name", "balance", "rateDisplay"]
+              }
+            }
+          }
+        },
+        {
+          "id": "backButton",
+          "component": {
+            "Button": {
+              "child": "backButtonText",
+              "action": {"name": "backToOverview"}
+            }
+          }
+        },
+        {
+          "id": "backButtonText",
+          "component": {
+            "Text": {
+              "text": {"literalString": "← Accounts"}
+            }
+          }
+        },
+        {
+          "id": "name",
+          "component": {
+            "Text": {
+              "text": {"path": "/name"},
+              "usageHint": "h3"
+            }
+          }
+        },
+        {
+          "id": "balance",
+          "component": {
+            "Text": {
+              "text": {"path": "/balanceDisplay"},
+              "usageHint": "h2"
+            }
+          }
+        },
+        {
+          "id": "rateDisplay",
+          "component": {
+            "Text": {
+              "text": {"path": "/rateDisplay"},
+              "usageHint": "body"
+            }
+          }
+        }
+      ]
+    }
+  },
   {"dataModelUpdate": {"surfaceId": "main_surface", "contents": []}},
   {"beginRendering": {"surfaceId": "main_surface", "root": "root"}}
 ]

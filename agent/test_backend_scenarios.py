@@ -136,8 +136,8 @@ def test_user_asks_for_mortgage_details():
     response = handle_query("what's my mortgage balance?")
     
     # THEN the response contains mortgage data
-    assert "mortgage" in response.data
-    assert isinstance(response.data["mortgage"], dict)
+    assert "propertyAddress" in response.data
+    assert "balanceDisplay" in response.data
     
     # AND it generates valid A2UI messages
     assert len(response.a2ui) > 0

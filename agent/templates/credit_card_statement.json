@@ -1,5 +1,258 @@
 [
-  {"surfaceUpdate": {"surfaceId": "main_surface", "components": [{"id": "root", "component": {"Column": {"children": {"explicitList": ["credit"]}}}}, {"id": "credit", "component": {"CreditCardSummary": {"payload": {"path": "/credit"}}}}]}},
+  {
+    "surfaceUpdate": {
+      "surfaceId": "main_surface",
+      "components": [
+        {
+          "id": "root",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["backButton", "cardNumber", "balance", "availableRow", "limitRow", "utilization", "minPayRow", "dueRow", "txHeader", "txList"]
+              }
+            }
+          }
+        },
+        {
+          "id": "backButton",
+          "component": {
+            "Button": {
+              "child": "backButtonText",
+              "action": {"name": "backToOverview"}
+            }
+          }
+        },
+        {
+          "id": "backButtonText",
+          "component": {
+            "Text": {
+              "text": {"literalString": "← Accounts"}
+            }
+          }
+        },
+        {
+          "id": "cardNumber",
+          "component": {
+            "Text": {
+              "text": {"path": "/cardNumber"},
+              "usageHint": "h4"
+            }
+          }
+        },
+        {
+          "id": "balance",
+          "component": {
+            "Text": {
+              "text": {"path": "/balanceDisplay"},
+              "usageHint": "h2"
+            }
+          }
+        },
+        {
+          "id": "availableRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["availableLabel", "availableValue"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "availableLabel",
+          "component": {
+            "Text": {
+              "text": {"literalString": "Available Credit"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "availableValue",
+          "component": {
+            "Text": {
+              "text": {"path": "/availableDisplay"},
+              "usageHint": "body"
+            }
+          }
+        },
+        {
+          "id": "limitRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["limitLabel", "limitValue"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "limitLabel",
+          "component": {
+            "Text": {
+              "text": {"literalString": "Credit Limit"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "limitValue",
+          "component": {
+            "Text": {
+              "text": {"path": "/limitDisplay"},
+              "usageHint": "body"
+            }
+          }
+        },
+        {
+          "id": "utilization",
+          "component": {
+            "Text": {
+              "text": {"path": "/utilizationDisplay"},
+              "usageHint": "body"
+            }
+          }
+        },
+        {
+          "id": "minPayRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["minPayLabel", "minPayValue"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "minPayLabel",
+          "component": {
+            "Text": {
+              "text": {"literalString": "Minimum Payment"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "minPayValue",
+          "component": {
+            "Text": {
+              "text": {"path": "/minimumPaymentDisplay"},
+              "usageHint": "body"
+            }
+          }
+        },
+        {
+          "id": "dueRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["dueLabel", "dueValue"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "dueLabel",
+          "component": {
+            "Text": {
+              "text": {"literalString": "Payment Due"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "dueValue",
+          "component": {
+            "Text": {
+              "text": {"path": "/paymentDueDate"},
+              "usageHint": "body"
+            }
+          }
+        },
+        {
+          "id": "txHeader",
+          "component": {
+            "Text": {
+              "text": {"literalString": "Recent Transactions"},
+              "usageHint": "h5"
+            }
+          }
+        },
+        {
+          "id": "txList",
+          "component": {
+            "List": {
+              "children": {
+                "template": {
+                  "componentId": "txRow",
+                  "dataBinding": "/transactions"
+                }
+              },
+              "direction": "vertical",
+              "alignment": "stretch"
+            }
+          }
+        },
+        {
+          "id": "txRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["txDesc", "txAmount"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "txDesc",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["txDescription", "txDate"]
+              }
+            }
+          }
+        },
+        {
+          "id": "txDescription",
+          "component": {
+            "Text": {
+              "text": {"path": "/description"},
+              "usageHint": "body"
+            }
+          }
+        },
+        {
+          "id": "txDate",
+          "component": {
+            "Text": {
+              "text": {"path": "/formattedDate"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "txAmount",
+          "component": {
+            "Text": {
+              "text": {"path": "/amountDisplay"},
+              "usageHint": "h5"
+            }
+          }
+        }
+      ]
+    }
+  },
   {"dataModelUpdate": {"surfaceId": "main_surface", "contents": []}},
   {"beginRendering": {"surfaceId": "main_surface", "root": "root"}}
 ]

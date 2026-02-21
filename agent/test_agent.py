@@ -15,4 +15,4 @@ def test_transactions_query_returns_transactions():
 
 def test_mortgage_query_returns_mortgage_data():
     response = handle_query('what is my mortgage balance')
-    assert 'mortgage' in response.data
+    assert 'propertyAddress' in response.data

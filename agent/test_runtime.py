@@ -219,12 +219,14 @@ def test_deterministic_runtime_handles_mortgage_query():
     Scenario: Deterministic Runtime Returns Mortgage Data
     GIVEN the deterministic runtime is active
     WHEN a user requests mortgage information
-    THEN it returns mortgage template with mortgage data
+    THEN it returns mortgage template with pre-formatted display fields
     """
     runtime = DeterministicRuntime()
     result = runtime.run('what is my mortgage balance?')
     assert result.template_name == 'mortgage_summary.json'
-    assert 'mortgage' in result.data
+    assert 'propertyAddress' in result.data
+    assert 'balanceDisplay' in result.data
+    assert result.data['balanceDisplay'].startswith('£')
 
 
 def test_deterministic_runtime_handles_credit_query():
@@ -232,12 +234,15 @@ def test_deterministic_runtime_handles_credit_query():
     Scenario: Deterministic Runtime Returns Credit Card Data
     GIVEN the deterministic runtime is active
     WHEN a user requests credit card information
-    THEN it returns credit card template with statement data
+    THEN it returns credit card template with pre-formatted display fields
     """
     runtime = DeterministicRuntime()
     result = runtime.run('show my credit card')
     assert result.template_name == 'credit_card_statement.json'
-    assert 'credit' in result.data
+    assert 'cardNumber' in result.data
+    assert 'balanceDisplay' in result.data
+    assert 'utilizationDisplay' in result.data
+    assert 'transactions' in result.data
 
 
 def test_deterministic_runtime_handles_savings_query():
@@ -245,12 +250,13 @@ def test_deterministic_runtime_handles_savings_query():
     Scenario: Deterministic Runtime Returns Savings Data
     GIVEN the deterministic runtime is active
     WHEN a user requests savings information
-    THEN it returns savings template with account data
+    THEN it returns savings template with pre-formatted display fields
     """
     runtime = DeterministicRuntime()
     result = runtime.run('show my savings')
     assert result.template_name == 'savings_summary.json'
-    assert 'savings' in result.data
+    assert 'balanceDisplay' in result.data
+    assert 'rateDisplay' in result.data
 
 
 def test_deterministic_runtime_handles_transactions_query():
@@ -258,10 +264,15 @@ def test_deterministic_runtime_handles_transactions_query():
     Scenario: Deterministic Runtime Returns Transaction List
     GIVEN the deterministic runtime is active
     WHEN a user requests transactions
-    THEN it returns transaction list template with transaction data
+    THEN it returns transaction list template with formatted transactions
     """
     runtime = DeterministicRuntime()
     result = runtime.run('show my transactions')
     assert result.template_name == 'transaction_list.json'
     assert 'transactions' in result.data
     assert len(result.data['transactions']) > 0
+    assert 'transactionCount' in result.data
+    # Verify transactions have display-ready fields
+    tx = result.data['transactions'][0]
+    assert 'amountDisplay' in tx
+    assert 'formattedDate' in tx

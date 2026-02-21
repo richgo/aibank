@@ -1,5 +1,197 @@
 [
-  {"surfaceUpdate": {"surfaceId": "main_surface", "components": [{"id": "root", "component": {"Column": {"children": {"explicitList": ["mortgage"]}}}}, {"id": "mortgage", "component": {"MortgageDetail": {"payload": {"path": "/mortgage"}}}}]}},
+  {
+    "surfaceUpdate": {
+      "surfaceId": "main_surface",
+      "components": [
+        {
+          "id": "root",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["backButton", "title", "balanceRow", "paymentRow", "rateRow", "termRow", "nextPayRow"]
+              }
+            }
+          }
+        },
+        {
+          "id": "backButton",
+          "component": {
+            "Button": {
+              "child": "backButtonText",
+              "action": {"name": "backToOverview"}
+            }
+          }
+        },
+        {
+          "id": "backButtonText",
+          "component": {
+            "Text": {
+              "text": {"literalString": "← Accounts"}
+            }
+          }
+        },
+        {
+          "id": "title",
+          "component": {
+            "Text": {
+              "text": {"path": "/propertyAddress"},
+              "usageHint": "h3"
+            }
+          }
+        },
+        {
+          "id": "balanceRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["balanceLabel", "balanceValue"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "balanceLabel",
+          "component": {
+            "Text": {
+              "text": {"literalString": "Outstanding Balance"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "balanceValue",
+          "component": {
+            "Text": {
+              "text": {"path": "/balanceDisplay"},
+              "usageHint": "h5"
+            }
+          }
+        },
+        {
+          "id": "paymentRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["paymentLabel", "paymentValue"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "paymentLabel",
+          "component": {
+            "Text": {
+              "text": {"literalString": "Monthly Payment"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "paymentValue",
+          "component": {
+            "Text": {
+              "text": {"path": "/paymentDisplay"},
+              "usageHint": "h5"
+            }
+          }
+        },
+        {
+          "id": "rateRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["rateLabel", "rateValue"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "rateLabel",
+          "component": {
+            "Text": {
+              "text": {"literalString": "Interest Rate"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "rateValue",
+          "component": {
+            "Text": {
+              "text": {"path": "/rateDisplay"},
+              "usageHint": "body"
+            }
+          }
+        },
+        {
+          "id": "termRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["termLabel", "termValue"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "termLabel",
+          "component": {
+            "Text": {
+              "text": {"literalString": "Term End Date"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "termValue",
+          "component": {
+            "Text": {
+              "text": {"path": "/termEndDate"},
+              "usageHint": "body"
+            }
+          }
+        },
+        {
+          "id": "nextPayRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["nextPayLabel", "nextPayValue"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "nextPayLabel",
+          "component": {
+            "Text": {
+              "text": {"literalString": "Next Payment"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "nextPayValue",
+          "component": {
+            "Text": {
+              "text": {"path": "/nextPaymentDate"},
+              "usageHint": "body"
+            }
+          }
+        }
+      ]
+    }
+  },
   {"dataModelUpdate": {"surfaceId": "main_surface", "contents": []}},
   {"beginRendering": {"surfaceId": "main_surface", "root": "root"}}
 ]

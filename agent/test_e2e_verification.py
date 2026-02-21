@@ -236,7 +236,7 @@ def test_query_mortgage_balance():
     
     # AND contains mortgage data
     assert "data" in data
-    assert "mortgage" in data["data"]
+    assert "propertyAddress" in data["data"]
     
     # AND contains valid A2UI
     assert "a2ui" in data
@@ -261,7 +261,7 @@ def test_query_credit_card_statement():
     
     # AND contains credit card data
     assert "data" in data
-    assert "credit" in data["data"]
+    assert "cardNumber" in data["data"]
     
     # AND contains valid A2UI
     assert "a2ui" in data
