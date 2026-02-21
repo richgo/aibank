@@ -1,5 +1,3 @@
-import 'package:aibank_app/catalog/account_card.dart';
-import 'package:aibank_app/catalog/account_overview.dart';
 import 'package:aibank_app/catalog/credit_card_summary.dart';
 import 'package:aibank_app/catalog/mortgage_detail.dart';
 import 'package:aibank_app/catalog/savings_summary.dart';
@@ -24,151 +22,10 @@ CatalogItemContext _createContext(BuildContext buildContext, Map<String, Object?
 void main() {
   group('Catalog Item Names', () {
     test('banking catalog items expose expected names', () {
-      expect(accountCardItem().name, 'AccountCard');
       expect(transactionListItem().name, 'TransactionList');
       expect(mortgageDetailItem().name, 'MortgageDetail');
       expect(creditCardSummaryItem().name, 'CreditCardSummary');
       expect(savingsSummaryItem().name, 'SavingsSummary');
-      expect(accountOverviewItem().name, 'AccountOverview');
-    });
-  });
-
-  group('AccountCard Component', () {
-    testWidgets('renders account name, type, and balance with correct styling', (tester) async {
-      final catalogItem = accountCardItem();
-      final mockData = {
-        'accountName': 'Main Current Account',
-        'accountType': 'Checking',
-        'balance': '1234.56',
-        'currency': 'GBP',
-      };
-
-      final widget = MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => catalogItem.widgetBuilder(_createContext(context, mockData)),
-          ),
-        ),
-      );
-
-      await tester.pumpWidget(widget);
-
-      expect(find.text('Main Current Account'), findsOneWidget);
-      expect(find.text('Checking'), findsOneWidget);
-      expect(find.text('£1234.56'), findsOneWidget);
-      
-      // Check that the card has the correct dimensions
-      final sizedBox = tester.widget<SizedBox>(find.byType(SizedBox).first);
-      expect(sizedBox.width, 180);
-      expect(sizedBox.height, 120);
-      
-      // Check for account balance icon
-      expect(find.byIcon(Icons.account_balance), findsOneWidget);
-    });
-
-    testWidgets('renders negative balance in coral color', (tester) async {
-      final catalogItem = accountCardItem();
-      final mockData = {
-        'accountName': 'Overdraft Account',
-        'accountType': 'Checking',
-        'balance': '-500.00',
-        'currency': 'GBP',
-      };
-
-      final widget = MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => catalogItem.widgetBuilder(_createContext(context, mockData)),
-          ),
-        ),
-      );
-
-      await tester.pumpWidget(widget);
-
-      expect(find.text('-£500.00'), findsOneWidget);
-      
-      // Check that negative balance is rendered in coral color
-      final balanceText = tester.widget<Text>(find.text('-£500.00'));
-      expect(balanceText.style?.color, const Color(0xFFFF6B6B));
-    });
-
-    testWidgets('shows correct icon for different account types', (tester) async {
-      final catalogItem = accountCardItem();
-      
-      // Test savings icon
-      final savingsWidget = MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => catalogItem.widgetBuilder(_createContext(context, {
-              'accountName': 'Savings Account',
-              'accountType': 'Savings',
-              'balance': '5000.00',
-              'currency': 'GBP',
-            })),
-          ),
-        ),
-      );
-      
-      await tester.pumpWidget(savingsWidget);
-      expect(find.byIcon(Icons.savings), findsOneWidget);
-      
-      // Test credit card icon
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => catalogItem.widgetBuilder(_createContext(context, {
-              'accountName': 'Credit Card',
-              'accountType': 'Credit',
-              'balance': '-1000.00',
-              'currency': 'GBP',
-            })),
-          ),
-        ),
-      ));
-      await tester.pump();
-      expect(find.byIcon(Icons.credit_card), findsOneWidget);
-      
-      // Test mortgage icon
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => catalogItem.widgetBuilder(_createContext(context, {
-              'accountName': 'Home Loan',
-              'accountType': 'Mortgage',
-              'balance': '-250000.00',
-              'currency': 'GBP',
-            })),
-          ),
-        ),
-      ));
-      await tester.pump();
-      expect(find.byIcon(Icons.home), findsOneWidget);
-    });
-
-    testWidgets('has gradient background and tappable gesture detector', (tester) async {
-      final catalogItem = accountCardItem();
-      final mockData = {
-        'accountName': 'Test Account',
-        'accountType': 'Checking',
-        'balance': '100.00',
-        'currency': 'GBP',
-      };
-
-      final widget = MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => catalogItem.widgetBuilder(_createContext(context, mockData)),
-          ),
-        ),
-      );
-
-      await tester.pumpWidget(widget);
-
-      // Check for GestureDetector with opaque hit testing
-      expect(find.byType(GestureDetector), findsOneWidget);
-      
-      // Check for gradient via DecoratedBox widget
-      expect(find.byType(DecoratedBox), findsOneWidget);
     });
   });
 
@@ -321,43 +178,6 @@ void main() {
     });
   });
 
-  group('AccountOverview Component', () {
-    testWidgets('renders net worth header and horizontal account cards', (tester) async {
-      final catalogItem = accountOverviewItem();
-      final mockData = {
-        'netWorth': '15234.56',
-        'accounts': [
-          {'name': 'Current', 'balance': '1234.56', 'accountType': 'Checking'},
-          {'name': 'My Savings', 'balance': '10000.00', 'accountType': 'Savings'},
-          {'name': 'Credit Card', 'balance': '-4000.00', 'accountType': 'Credit'},
-        ],
-      };
-
-      final widget = MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => catalogItem.widgetBuilder(_createContext(context, mockData)),
-          ),
-        ),
-      );
-
-      await tester.pumpWidget(widget);
-
-      // Check net worth header
-      expect(find.text('Net Worth'), findsOneWidget);
-      expect(find.text('£15234.56'), findsOneWidget);
-      
-      // Check account cards are rendered
-      expect(find.text('Current'), findsOneWidget);
-      expect(find.text('My Savings'), findsOneWidget);
-      expect(find.text('Credit Card'), findsOneWidget);
-      
-      // Check account types are displayed
-      expect(find.text('Checking'), findsOneWidget);
-      expect(find.text('Savings'), findsOneWidget);
-      expect(find.text('Credit'), findsOneWidget);
-    });
-  });
 }
 
 // Mock DataModel for testing

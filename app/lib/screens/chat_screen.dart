@@ -77,12 +77,6 @@ class _ChatScreenState extends State<ChatScreen> {
       });
     }
 
-    CatalogCallbacks.onAccountTap = (accountName) {
-      _sendMessage('Show transactions for $accountName');
-    };
-    CatalogCallbacks.onAccountDetailTap = (accountName) {
-      _sendMessage('show details for $accountName');
-    };
     CatalogCallbacks.onBackToOverview = () {
       _sendMessage('show my accounts');
     };
@@ -90,8 +84,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
-    CatalogCallbacks.onAccountTap = null;
-    CatalogCallbacks.onAccountDetailTap = null;
     CatalogCallbacks.onBackToOverview = null;
     _controller.dispose();
     _conversation?.dispose();

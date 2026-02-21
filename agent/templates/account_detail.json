@@ -1,5 +1,168 @@
 [
-  {"surfaceUpdate": {"surfaceId": "main_surface", "components": [{"id": "root", "component": {"Column": {"children": {"explicitList": ["detail"]}}}}, {"id": "detail", "component": {"AccountDetailView": {"name": {"path": "/name"}, "type": {"path": "/type"}, "balance": {"path": "/balance"}, "currency": {"path": "/currency"}, "accountNumber": {"path": "/accountNumber"}, "sortCode": {"path": "/sortCode"}, "interestRate": {"path": "/interestRate"}, "overdraftLimit": {"path": "/overdraftLimit"}, "transactions": {"path": "/transactions"}}}}]}},
+  {
+    "surfaceUpdate": {
+      "surfaceId": "main_surface",
+      "components": [
+        {
+          "id": "root",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["backButton", "accountHeader", "detailsSection", "txHeader", "txList"]
+              }
+            }
+          }
+        },
+        {
+          "id": "backButton",
+          "component": {
+            "Button": {
+              "child": "backButtonText",
+              "action": {"name": "backToOverview"}
+            }
+          }
+        },
+        {
+          "id": "backButtonText",
+          "component": {
+            "Text": {
+              "text": {"literalString": "← Accounts"}
+            }
+          }
+        },
+        {
+          "id": "accountHeader",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["accountName", "accountBalance"]
+              },
+              "alignment": "stretch"
+            }
+          }
+        },
+        {
+          "id": "accountName",
+          "component": {
+            "Text": {
+              "text": {"path": "/name"},
+              "usageHint": "h3"
+            }
+          }
+        },
+        {
+          "id": "accountBalance",
+          "component": {
+            "Text": {
+              "text": {"path": "/balanceDisplay"},
+              "usageHint": "h2"
+            }
+          }
+        },
+        {
+          "id": "detailsSection",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["detailType", "detailExtra"]
+              }
+            }
+          }
+        },
+        {
+          "id": "detailType",
+          "component": {
+            "Text": {
+              "text": {"path": "/typeLabel"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "detailExtra",
+          "component": {
+            "Text": {
+              "text": {"path": "/detailLine"},
+              "usageHint": "body"
+            }
+          }
+        },
+        {
+          "id": "txHeader",
+          "component": {
+            "Text": {
+              "text": {"literalString": "Recent Transactions"},
+              "usageHint": "h5"
+            }
+          }
+        },
+        {
+          "id": "txList",
+          "component": {
+            "List": {
+              "children": {
+                "template": {
+                  "componentId": "txRow",
+                  "dataBinding": "/transactions"
+                }
+              },
+              "direction": "vertical",
+              "alignment": "stretch"
+            }
+          }
+        },
+        {
+          "id": "txRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["txDesc", "txAmount"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "txDesc",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["txDescription", "txDate"]
+              }
+            }
+          }
+        },
+        {
+          "id": "txDescription",
+          "component": {
+            "Text": {
+              "text": {"path": "/description"},
+              "usageHint": "body"
+            }
+          }
+        },
+        {
+          "id": "txDate",
+          "component": {
+            "Text": {
+              "text": {"path": "/date"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "txAmount",
+          "component": {
+            "Text": {
+              "text": {"path": "/amountDisplay"},
+              "usageHint": "h5"
+            }
+          }
+        }
+      ]
+    }
+  },
   {"dataModelUpdate": {"surfaceId": "main_surface", "contents": []}},
   {"beginRendering": {"surfaceId": "main_surface", "root": "root"}}
 ]

@@ -72,22 +72,70 @@ class DeterministicRuntime:
             total += float(account["balance"])
         return f"{total:.2f}"
 
+    @staticmethod
+    def _format_detail_data(
+        detail: dict[str, Any], transactions: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        """Prepare account detail data with display-ready fields."""
+        balance = detail.get("balance", "0.00")
+        is_negative = balance.startswith("-")
+        display_bal = f"-£{balance[1:]}" if is_negative else f"£{balance}"
+
+        acct_type = detail.get("type", "")
+        parts = []
+        if detail.get("accountNumber"):
+            parts.append(f"Account: {detail['accountNumber']}")
+        if detail.get("sortCode"):
+            parts.append(f"Sort Code: {detail['sortCode']}")
+        if detail.get("interestRate"):
+            parts.append(f"Interest: {detail['interestRate']}%")
+        if detail.get("overdraftLimit"):
+            parts.append(f"Overdraft: £{detail['overdraftLimit']}")
+        detail_line = " · ".join(parts) if parts else ""
+
+        # Format transaction amounts for display
+        for tx in transactions:
+            amt = tx.get("amount", "0.00")
+            if tx.get("type") == "debit":
+                tx["amountDisplay"] = f"-£{amt}"
+            else:
+                tx["amountDisplay"] = f"£{amt}"
+
+        return {
+            **detail,
+            "balanceDisplay": display_bal,
+            "typeLabel": acct_type.title(),
+            "detailLine": detail_line,
+            "transactions": transactions,
+        }
+
     def run(self, message: str) -> RuntimeResponse:
         # Handle UI action events (button taps from A2UI components)
-        if "useraction" in message.lower() or "selectaccount" in message.lower():
+        if "useraction" in message.lower():
             try:
                 import json as _json
                 action = _json.loads(message)
                 ctx = action.get("userAction", {}).get("context", {})
+                action_name = action.get("userAction", {}).get("name", "")
+
+                if action_name == "backToOverview":
+                    accounts = call_tool("get_accounts")
+                    net_worth = self._net_worth(accounts)
+                    return RuntimeResponse(
+                        text="Here is an overview of all your accounts.",
+                        template_name="account_overview.json",
+                        data={"accounts": accounts, "headerText": f"Net Worth: £{net_worth}"},
+                    )
+
                 account_id = ctx.get("accountId")
-                account_name = ctx.get("accountName", "")
                 if account_id:
                     detail = call_tool("get_account_detail", account_id=account_id)
                     transactions = call_tool("get_transactions", account_id=account_id, limit=10)
+                    data = self._format_detail_data(detail, transactions)
                     return RuntimeResponse(
-                        text=f"Here are the details for {detail['name']}.",
+                        text=detail["name"],
                         template_name="account_detail.json",
-                        data={**detail, "transactions": transactions},
+                        data=data,
                     )
             except (ValueError, KeyError):
                 pass
@@ -188,10 +236,11 @@ class DeterministicRuntime:
             )
             detail = call_tool("get_account_detail", account_id=account["id"])
             transactions = call_tool("get_transactions", account_id=account["id"], limit=10)
+            data = self._format_detail_data(detail, transactions)
             return RuntimeResponse(
-                text=f"Here are the details for {detail['name']}.",
+                text=detail["name"],
                 template_name="account_detail.json",
-                data={**detail, "transactions": transactions},
+                data=data,
             )
 
         accounts = call_tool("get_accounts")
