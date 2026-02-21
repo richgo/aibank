@@ -3,8 +3,104 @@
     "surfaceUpdate": {
       "surfaceId": "main_surface",
       "components": [
-        {"id": "root", "component": {"Column": {"children": {"explicitList": ["overview"]}}}},
-        {"id": "overview", "component": {"AccountOverview": {"accounts": {"path": "/accounts"}, "netWorth": {"path": "/netWorth"}}}}
+        {
+          "id": "root",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["header", "accountList"]
+              }
+            }
+          }
+        },
+        {
+          "id": "header",
+          "component": {
+            "Text": {
+              "text": {"path": "/headerText"},
+              "usageHint": "h4"
+            }
+          }
+        },
+        {
+          "id": "accountList",
+          "component": {
+            "List": {
+              "children": {
+                "template": {
+                  "componentId": "accountItemTemplate",
+                  "dataBinding": "/accounts"
+                }
+              },
+              "direction": "vertical",
+              "alignment": "stretch"
+            }
+          }
+        },
+        {
+          "id": "accountItemTemplate",
+          "component": {
+            "Button": {
+              "child": "accountItemRow",
+              "action": {
+                "name": "selectAccount",
+                "context": [
+                  {"key": "accountName", "value": {"path": "/name"}},
+                  {"key": "accountId", "value": {"path": "/id"}}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "accountItemRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["accountInfo", "accountBalance"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "accountInfo",
+          "component": {
+            "Column": {
+              "children": {
+                "explicitList": ["accountName", "accountType"]
+              }
+            }
+          }
+        },
+        {
+          "id": "accountName",
+          "component": {
+            "Text": {
+              "text": {"path": "/name"},
+              "usageHint": "h5"
+            }
+          }
+        },
+        {
+          "id": "accountType",
+          "component": {
+            "Text": {
+              "text": {"path": "/type"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "accountBalance",
+          "component": {
+            "Text": {
+              "text": {"path": "/balance"},
+              "usageHint": "h5"
+            }
+          }
+        }
       ]
     }
   },

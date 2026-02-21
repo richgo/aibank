@@ -73,6 +73,25 @@ class DeterministicRuntime:
         return f"{total:.2f}"
 
     def run(self, message: str) -> RuntimeResponse:
+        # Handle UI action events (button taps from A2UI components)
+        if "useraction" in message.lower() or "selectaccount" in message.lower():
+            try:
+                import json as _json
+                action = _json.loads(message)
+                ctx = action.get("userAction", {}).get("context", {})
+                account_id = ctx.get("accountId")
+                account_name = ctx.get("accountName", "")
+                if account_id:
+                    detail = call_tool("get_account_detail", account_id=account_id)
+                    transactions = call_tool("get_transactions", account_id=account_id, limit=10)
+                    return RuntimeResponse(
+                        text=f"Here are the details for {detail['name']}.",
+                        template_name="account_detail.json",
+                        data={**detail, "transactions": transactions},
+                    )
+            except (ValueError, KeyError):
+                pass
+
         intent = self._intent(message)
         if intent == "transaction_location":
             # Get transactions from current account
@@ -176,10 +195,11 @@ class DeterministicRuntime:
             )
 
         accounts = call_tool("get_accounts")
+        net_worth = self._net_worth(accounts)
         return RuntimeResponse(
             text="Here is an overview of all your accounts.",
             template_name="account_overview.json",
-            data={"accounts": accounts, "netWorth": self._net_worth(accounts)},
+            data={"accounts": accounts, "headerText": f"Net Worth: £{net_worth}"},
         )
 
 

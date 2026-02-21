@@ -211,7 +211,7 @@ def test_deterministic_runtime_handles_overview_query():
     result = runtime.run('show my accounts')
     assert result.template_name == 'account_overview.json'
     assert 'accounts' in result.data
-    assert 'netWorth' in result.data
+    assert 'headerText' in result.data
 
 
 def test_deterministic_runtime_handles_mortgage_query():
