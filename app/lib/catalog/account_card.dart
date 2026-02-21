@@ -61,86 +61,55 @@ class AccountCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isNegative = balance.startsWith('-');
-    final displayBalance = balance.startsWith('-') 
-        ? balance.substring(1) 
-        : balance;
-    final balanceColor = isNegative 
-        ? const Color(0xFFFF6B6B) 
-        : Colors.white;
+    final displayBalance = isNegative ? balance.substring(1) : balance;
+    final balanceColor = isNegative ? const Color(0xFFFF6B6B) : Colors.white;
 
-    return SizedBox(
-      width: 180,
-      height: 120,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(BankTheme.cardRadius),
-        child: Material(
-          color: Colors.transparent,
-          child: Ink(
-            decoration: BoxDecoration(
-              gradient: BankTheme.cardGradient(),
-              borderRadius: BorderRadius.circular(BankTheme.cardRadius),
-            ),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(BankTheme.cardRadius),
-              splashColor: Colors.white.withValues(alpha: 0.3),
-              onTap: () => CatalogCallbacks.onAccountDetailTap?.call(name),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => CatalogCallbacks.onAccountDetailTap?.call(name),
+      child: SizedBox(
+        width: 180,
+        height: 120,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: BankTheme.cardGradient(),
+            borderRadius: BorderRadius.circular(BankTheme.cardRadius),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
                   children: [
-                    // Top row: icon + account name
-                    Row(
-                      children: [
-                        Icon(
-                          _getIconForAccountType(accountType),
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            name,
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    // Balance
-                    Text(
-                      '${isNegative ? '-' : ''}£$displayBalance',
-                      style: GoogleFonts.robotoMono(
-                        color: balanceColor,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        height: 1.2,
+                    Icon(_getIconForAccountType(accountType), color: Colors.white, size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    // Account type label
-                    Text(
-                      accountType,
-                      style: GoogleFonts.inter(
-                        color: Colors.white70,
-                        fontSize: 10,
-                        height: 1.2,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
-              ),
+                const Spacer(),
+                Text(
+                  '${isNegative ? '-' : ''}£$displayBalance',
+                  style: GoogleFonts.robotoMono(color: balanceColor, fontSize: 18, fontWeight: FontWeight.bold, height: 1.2),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  accountType,
+                  style: GoogleFonts.inter(color: Colors.white70, fontSize: 10, height: 1.2),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ),

@@ -145,7 +145,7 @@ void main() {
       expect(find.byIcon(Icons.home), findsOneWidget);
     });
 
-    testWidgets('has gradient background and proper InkWell', (tester) async {
+    testWidgets('has gradient background and tappable gesture detector', (tester) async {
       final catalogItem = accountCardItem();
       final mockData = {
         'accountName': 'Test Account',
@@ -164,11 +164,11 @@ void main() {
 
       await tester.pumpWidget(widget);
 
-      // Check for InkWell
-      expect(find.byType(InkWell), findsOneWidget);
+      // Check for GestureDetector with opaque hit testing
+      expect(find.byType(GestureDetector), findsOneWidget);
       
-      // Check for gradient via Ink widget
-      expect(find.byType(Ink), findsOneWidget);
+      // Check for gradient via DecoratedBox widget
+      expect(find.byType(DecoratedBox), findsOneWidget);
     });
   });
 
