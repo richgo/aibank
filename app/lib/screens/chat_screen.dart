@@ -193,10 +193,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(minHeight: 100, maxHeight: 560),
-                          child: GenUiSurface(host: _processor!, surfaceId: entry.surfaceId!),
-                        ),
+                        child: GenUiSurface(host: _processor!, surfaceId: entry.surfaceId!),
                       ),
                     );
                 }
