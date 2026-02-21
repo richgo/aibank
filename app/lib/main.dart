@@ -5,7 +5,11 @@ import 'screens/chat_screen.dart';
 import 'theme/bank_theme.dart';
 
 void main() {
-  Logger.root.level = Level.INFO;
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    // ignore: avoid_print
+    print('${record.level.name}: ${record.loggerName}: ${record.message}');
+  });
   runApp(const AIBankApp());
 }
 

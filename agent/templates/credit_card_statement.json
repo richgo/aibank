@@ -218,15 +218,13 @@
         {
           "id": "txList",
           "component": {
-            "List": {
+            "Column": {
               "children": {
                 "template": {
                   "componentId": "txRow",
                   "dataBinding": "/transactions"
                 }
-              },
-              "direction": "vertical",
-              "alignment": "stretch"
+              }
             }
           }
         },

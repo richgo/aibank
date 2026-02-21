@@ -25,15 +25,13 @@
         {
           "id": "accountList",
           "component": {
-            "List": {
+            "Column": {
               "children": {
                 "template": {
                   "componentId": "accountItemTemplate",
                   "dataBinding": "/accounts"
                 }
-              },
-              "direction": "vertical",
-              "alignment": "stretch"
+              }
             }
           }
         },
