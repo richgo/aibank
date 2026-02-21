@@ -96,6 +96,11 @@ class DeterministicRuntime:
             tx["formattedDate"] = DeterministicRuntime._format_date(tx.get("date", ""))
 
     @staticmethod
+    def _list_to_map(items: list) -> dict[str, Any]:
+        """Convert a list to an index-keyed dict for genui DataModel compatibility."""
+        return {str(i): item for i, item in enumerate(items)}
+
+    @staticmethod
     def _format_detail_data(
         detail: dict[str, Any], transactions: list[dict[str, Any]]
     ) -> dict[str, Any]:
@@ -123,7 +128,7 @@ class DeterministicRuntime:
             "balanceDisplay": display_bal,
             "typeLabel": acct_type.title(),
             "detailLine": detail_line,
-            "transactions": transactions,
+            "transactions": DeterministicRuntime._list_to_map(transactions),
         }
 
     @staticmethod
@@ -152,7 +157,7 @@ class DeterministicRuntime:
             "limitDisplay": f"£{credit.get('creditLimit', '0.00')}",
             "utilizationDisplay": f"{utilization}% of limit used",
             "minimumPaymentDisplay": f"£{credit.get('minimumPayment', '0.00')}",
-            "transactions": txs,
+            "transactions": DeterministicRuntime._list_to_map(txs),
         }
 
     @staticmethod
@@ -179,7 +184,7 @@ class DeterministicRuntime:
                     return RuntimeResponse(
                         text="Here is an overview of all your accounts.",
                         template_name="account_overview.json",
-                        data={"accounts": accounts, "headerText": f"Net Worth: £{net_worth}"},
+                        data={"accounts": self._list_to_map(accounts), "headerText": f"Net Worth: £{net_worth}"},
                     )
 
                 account_id = ctx.get("accountId")
@@ -207,7 +212,7 @@ class DeterministicRuntime:
                 return RuntimeResponse(
                     text="I couldn't find any accounts.",
                     template_name="account_overview.json",
-                    data={"accounts": [], "netWorth": "0.00"},
+                    data={"accounts": self._list_to_map([]), "netWorth": "0.00"},
                 )
 
             transactions = call_tool("get_transactions", account_id=current_account["id"], limit=20)
@@ -222,7 +227,7 @@ class DeterministicRuntime:
                     text="I couldn't identify which transaction you're asking about. Please specify a merchant name.",
                     template_name="transaction_list.json",
                     data={
-                        "transactions": transactions,
+                        "transactions": self._list_to_map(transactions),
                         "accountName": current_account.get("name", "Account"),
                         "transactionCount": f"{len(transactions)} transactions",
                     },
@@ -240,7 +245,7 @@ class DeterministicRuntime:
                     text=f"I couldn't find the location for {merchant_name}. This may be an online purchase or the location is unavailable.",
                     template_name="transaction_list.json",
                     data={
-                        "transactions": [tx],
+                        "transactions": self._list_to_map([tx]),
                         "accountName": current_account.get("name", "Account"),
                         "transactionCount": "1 transaction",
                     },
@@ -296,7 +301,7 @@ class DeterministicRuntime:
                 text=f"Here are the latest transactions for {account['name']}.",
                 template_name="transaction_list.json",
                 data={
-                    "transactions": txs,
+                    "transactions": self._list_to_map(txs),
                     "accountName": account["name"],
                     "transactionCount": f"{len(txs)} transactions",
                 },
@@ -321,7 +326,7 @@ class DeterministicRuntime:
         return RuntimeResponse(
             text="Here is an overview of all your accounts.",
             template_name="account_overview.json",
-            data={"accounts": accounts, "headerText": f"Net Worth: £{net_worth}"},
+            data={"accounts": self._list_to_map(accounts), "headerText": f"Net Worth: £{net_worth}"},
         )
 
 

@@ -92,7 +92,7 @@ def test_user_asks_for_account_overview():
     
     # THEN the response contains accounts data (proving get_accounts was called)
     assert "accounts" in response.data
-    assert isinstance(response.data["accounts"], list)
+    assert isinstance(response.data["accounts"], dict)
     assert len(response.data["accounts"]) > 0
     
     # AND it generates valid A2UI messages
@@ -117,9 +117,7 @@ def test_user_asks_for_transaction_history():
     
     # THEN the response contains transactions data
     assert "transactions" in response.data
-    assert isinstance(response.data["transactions"], list)
-    
-    # AND it generates valid A2UI messages
+    assert isinstance(response.data["transactions"], dict)
     assert len(response.a2ui) > 0
     jsonschema.validate(instance=response.a2ui, schema=A2UI_SCHEMA)
 
@@ -213,10 +211,10 @@ def test_agent_calls_mcp_tool_successfully():
     # THEN the data is populated from MCP
     assert "accounts" in response.data
     accounts = response.data["accounts"]
-    assert isinstance(accounts, list)
+    assert isinstance(accounts, dict)
     
     # AND each account has the expected structure
-    for account in accounts:
+    for account in accounts.values():
         assert "id" in account
         assert "type" in account
         assert "balance" in account
@@ -350,5 +348,5 @@ def test_edge_case_empty_transaction_list():
     
     # The data structure supports empty arrays
     assert "transactions" in response.data
-    assert isinstance(response.data["transactions"], list)
-    # (Empty arrays are valid and handled by the widget)
+    assert isinstance(response.data["transactions"], dict)
+    # (Empty dicts are valid and handled by the template)

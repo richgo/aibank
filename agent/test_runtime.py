@@ -272,7 +272,7 @@ def test_deterministic_runtime_handles_transactions_query():
     assert 'transactions' in result.data
     assert len(result.data['transactions']) > 0
     assert 'transactionCount' in result.data
-    # Verify transactions have display-ready fields
-    tx = result.data['transactions'][0]
+    # Verify transactions have display-ready fields (dict keyed by index)
+    tx = result.data['transactions']['0']
     assert 'amountDisplay' in tx
     assert 'formattedDate' in tx
