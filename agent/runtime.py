@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from mcp_server.server import call_tool
-from agent.mcp_apps import geocode_merchant
+from agent.mcp_apps import geocode_with_bbox, get_mcp_apps_config
 
 
 @dataclass(frozen=True)
@@ -177,7 +177,17 @@ class DeterministicRuntime:
             try:
                 import json as _json
                 action = _json.loads(message)
-                ctx = action.get("userAction", {}).get("context", {})
+                raw_ctx = action.get("userAction", {}).get("context", {})
+                if isinstance(raw_ctx, dict):
+                    ctx = raw_ctx
+                elif isinstance(raw_ctx, list):
+                    ctx = {
+                        str(item["key"]): item.get("value")
+                        for item in raw_ctx
+                        if isinstance(item, dict) and "key" in item
+                    }
+                else:
+                    ctx = {}
                 action_name = action.get("userAction", {}).get("name", "")
 
                 if action_name == "backToOverview":
@@ -186,8 +196,61 @@ class DeterministicRuntime:
                     return RuntimeResponse(
                         text="Here is an overview of all your accounts.",
                         template_name="account_overview.json",
-                        data={"accounts": self._list_to_map(accounts), "headerText": f"Net Worth: £{net_worth}"},
+                        data={"accounts": self._list_to_map(accounts), "headerText": f"Net Worth: £{net_worth}", "accountCount": f"{len(accounts)} accounts"},
                     )
+
+                if action_name == "selectTransaction":
+                    desc_value = ctx.get("description")
+                    description = desc_value.strip() if isinstance(desc_value, str) else ""
+                    txid_value = ctx.get("transactionId")
+                    transaction_id = str(txid_value).strip() if txid_value is not None else ""
+                    transaction: dict[str, Any] | None = None
+
+                    if description:
+                        transaction = {"description": description}
+                        if transaction_id:
+                            transaction["id"] = transaction_id
+                        if isinstance(ctx.get("formattedDate"), str):
+                            transaction["formattedDate"] = ctx["formattedDate"]
+                        if isinstance(ctx.get("amountDisplay"), str):
+                            transaction["amountDisplay"] = ctx["amountDisplay"]
+                    elif transaction_id:
+                        accounts = call_tool("get_accounts")
+                        current_account = next(
+                            (a for a in accounts if a["type"] == "current"),
+                            accounts[0] if accounts else None
+                        )
+                        if current_account:
+                            transactions = call_tool("get_transactions", account_id=current_account["id"], limit=20)
+                            transaction = next((tx for tx in transactions if str(tx.get("id")) == transaction_id), None)
+                            if transaction:
+                                description = str(transaction.get("description", "")).strip()
+
+                    if description:
+                        bbox = geocode_with_bbox(description)
+                        if bbox is not None:
+                            config = get_mcp_apps_config()
+                            return RuntimeResponse(
+                                text=f"Here is where your {description} transaction occurred.",
+                                template_name="transaction_location.json",
+                                data={
+                                    "transaction": transaction or {"description": description},
+                                    "frame": {
+                                        "mcpEndpointUrl": config.map_server_url,
+                                        "resourceUri": "ui://cesium-map/mcp-app.html",
+                                        "toolName": "show-map",
+                                        "toolInput": {
+                                            "west": bbox["west"],
+                                            "south": bbox["south"],
+                                            "east": bbox["east"],
+                                            "north": bbox["north"],
+                                            "label": bbox["label"],
+                                        },
+                                    },
+                                },
+                            )
+
+                    return self.run("show my transactions")
 
                 account_id = ctx.get("accountId")
                 if account_id:
@@ -195,7 +258,7 @@ class DeterministicRuntime:
                     transactions = call_tool("get_transactions", account_id=account_id, limit=10)
                     data = self._format_detail_data(detail, transactions)
                     return RuntimeResponse(
-                        text=detail["name"],
+                        text="",
                         template_name="account_detail.json",
                         data=data,
                     )
@@ -214,7 +277,7 @@ class DeterministicRuntime:
                 return RuntimeResponse(
                     text="I couldn't find any accounts.",
                     template_name="account_overview.json",
-                    data={"accounts": self._list_to_map([]), "netWorth": "0.00"},
+                    data={"accounts": self._list_to_map([]), "netWorth": "0.00", "headerText": "Accounts", "accountCount": "0 accounts"},
                 )
 
             transactions = call_tool("get_transactions", account_id=current_account["id"], limit=20)
@@ -238,9 +301,9 @@ class DeterministicRuntime:
             tx, merchant_name = merchant_result
 
             # Geocode the merchant
-            location = geocode_merchant(merchant_name)
+            bbox = geocode_with_bbox(merchant_name)
 
-            if location is None:
+            if bbox is None:
                 # Geocoding failed
                 self._format_transactions([tx])
                 return RuntimeResponse(
@@ -253,13 +316,25 @@ class DeterministicRuntime:
                     },
                 )
 
-            # Success - return transaction with location
+            # Success - return transaction with frame data for MCP App iframe
+            config = get_mcp_apps_config()
             return RuntimeResponse(
                 text=f"Here is where your {merchant_name} transaction occurred.",
                 template_name="transaction_location.json",
                 data={
                     "transaction": tx,
-                    "location": location,
+                    "frame": {
+                        "mcpEndpointUrl": config.map_server_url,
+                        "resourceUri": "ui://cesium-map/mcp-app.html",
+                        "toolName": "show-map",
+                        "toolInput": {
+                            "west": bbox["west"],
+                            "south": bbox["south"],
+                            "east": bbox["east"],
+                            "north": bbox["north"],
+                            "label": bbox["label"],
+                        },
+                    },
                 },
             )
 
@@ -318,7 +393,7 @@ class DeterministicRuntime:
             transactions = call_tool("get_transactions", account_id=account["id"], limit=10)
             data = self._format_detail_data(detail, transactions)
             return RuntimeResponse(
-                text=detail["name"],
+                text="",
                 template_name="account_detail.json",
                 data=data,
             )
@@ -328,7 +403,7 @@ class DeterministicRuntime:
         return RuntimeResponse(
             text="Here is an overview of all your accounts.",
             template_name="account_overview.json",
-            data={"accounts": self._list_to_map(accounts), "headerText": f"Net Worth: £{net_worth}"},
+            data={"accounts": self._list_to_map(accounts), "headerText": f"Net Worth: £{net_worth}", "accountCount": f"{len(accounts)} accounts"},
         )
 
 

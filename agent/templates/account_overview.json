@@ -6,56 +6,28 @@
         {
           "id": "root",
           "component": {
-            "Column": {
-              "children": {
-                "explicitList": ["header", "accountList"]
-              }
+            "Card": {
+              "child": "mainColumn"
             }
           }
         },
         {
-          "id": "header",
-          "component": {
-            "Text": {
-              "text": {"path": "/headerText"},
-              "usageHint": "h4"
-            }
-          }
-        },
-        {
-          "id": "accountList",
+          "id": "mainColumn",
           "component": {
             "Column": {
+              "alignment": "stretch",
               "children": {
-                "template": {
-                  "componentId": "accountItemTemplate",
-                  "dataBinding": "/accounts"
-                }
+                "explicitList": ["headerRow", "divider", "accountList"]
               }
             }
           }
         },
         {
-          "id": "accountItemTemplate",
-          "component": {
-            "Button": {
-              "child": "accountItemRow",
-              "action": {
-                "name": "selectAccount",
-                "context": [
-                  {"key": "accountName", "value": {"path": "name"}},
-                  {"key": "accountId", "value": {"path": "id"}}
-                ]
-              }
-            }
-          }
-        },
-        {
-          "id": "accountItemRow",
+          "id": "headerRow",
           "component": {
             "Row": {
               "children": {
-                "explicitList": ["accountInfo", "accountBalance"]
+                "explicitList": ["headerLeft", "accountCount"]
               },
               "distribution": "spaceBetween",
               "alignment": "center"
@@ -63,21 +35,105 @@
           }
         },
         {
-          "id": "accountInfo",
+          "id": "headerLeft",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["headerIcon", "headerTitle"]
+              },
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "headerIcon",
+          "component": {
+            "Icon": {
+              "name": {"literalString": "home"}
+            }
+          }
+        },
+        {
+          "id": "headerTitle",
+          "component": {
+            "Text": {
+              "text": {"path": "/headerText"},
+              "usageHint": "h3"
+            }
+          }
+        },
+        {
+          "id": "accountCount",
+          "component": {
+            "Text": {
+              "text": {"path": "/accountCount"},
+              "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "divider",
+          "component": {
+            "Divider": {}
+          }
+        },
+        {
+          "id": "accountList",
           "component": {
             "Column": {
+              "alignment": "stretch",
               "children": {
-                "explicitList": ["accountName", "accountType"]
+                "template": {
+                  "componentId": "accountRowButton",
+                  "dataBinding": "/accounts"
+                }
               }
             }
           }
         },
         {
-          "id": "accountName",
+          "id": "accountRowButton",
           "component": {
-            "Text": {
-              "text": {"path": "name"},
-              "usageHint": "h5"
+            "Button": {
+              "child": "accountRow",
+              "action": {
+                "name": "selectAccount",
+                "context": [
+                  {"key": "accountId", "value": {"path": "id"}},
+                  {"key": "accountName", "value": {"path": "name"}}
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "accountRow",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["accountLeft", "accountBalance"]
+              },
+              "distribution": "spaceBetween",
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "accountLeft",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["accountIcon", "accountType", "accountName"]
+              },
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "accountIcon",
+          "component": {
+            "Icon": {
+              "name": {"literalString": "accountCircle"}
             }
           }
         },
@@ -87,6 +143,15 @@
             "Text": {
               "text": {"path": "type"},
               "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "accountName",
+          "component": {
+            "Text": {
+              "text": {"path": "name"},
+              "usageHint": "body"
             }
           }
         },

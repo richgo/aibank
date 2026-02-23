@@ -6,12 +6,18 @@
         {
           "id": "root",
           "component": {
+            "Card": {
+              "child": "mainColumn"
+            }
+          }
+        },
+        {
+          "id": "mainColumn",
+          "component": {
             "Column": {
+              "alignment": "stretch",
               "children": {
-                "explicitList": [
-                  "headerRow",
-                  "txList"
-                ]
+                "explicitList": ["headerRow", "divider", "txList"]
               }
             }
           }
@@ -21,10 +27,7 @@
           "component": {
             "Row": {
               "children": {
-                "explicitList": [
-                  "headerName",
-                  "txCount"
-                ]
+                "explicitList": ["headerLeft", "txCount"]
               },
               "distribution": "spaceBetween",
               "alignment": "center"
@@ -32,13 +35,30 @@
           }
         },
         {
+          "id": "headerLeft",
+          "component": {
+            "Row": {
+              "children": {
+                "explicitList": ["headerIcon", "headerName"]
+              },
+              "alignment": "center"
+            }
+          }
+        },
+        {
+          "id": "headerIcon",
+          "component": {
+            "Icon": {
+              "name": {"literalString": "payment"}
+            }
+          }
+        },
+        {
           "id": "headerName",
           "component": {
             "Text": {
-              "text": {
-                "path": "/accountName"
-              },
-              "usageHint": "h4"
+              "text": {"path": "/accountName"},
+              "usageHint": "h3"
             }
           }
         },
@@ -46,22 +66,44 @@
           "id": "txCount",
           "component": {
             "Text": {
-              "text": {
-                "path": "/transactionCount"
-              },
+              "text": {"path": "/transactionCount"},
               "usageHint": "caption"
             }
+          }
+        },
+        {
+          "id": "divider",
+          "component": {
+            "Divider": {}
           }
         },
         {
           "id": "txList",
           "component": {
             "Column": {
+              "alignment": "stretch",
               "children": {
                 "template": {
-                  "componentId": "txRow",
+                  "componentId": "txRowButton",
                   "dataBinding": "/transactions"
                 }
+              }
+            }
+          }
+        },
+        {
+          "id": "txRowButton",
+          "component": {
+            "Button": {
+              "child": "txRow",
+              "action": {
+                "name": "selectTransaction",
+                "context": [
+                  {"key": "transactionId", "value": {"path": "id"}},
+                  {"key": "description", "value": {"path": "description"}},
+                  {"key": "formattedDate", "value": {"path": "formattedDate"}},
+                  {"key": "amountDisplay", "value": {"path": "amountDisplay"}}
+                ]
               }
             }
           }
@@ -71,10 +113,7 @@
           "component": {
             "Row": {
               "children": {
-                "explicitList": [
-                  "txDesc",
-                  "txAmount"
-                ]
+                "explicitList": ["txLeft", "txAmount"]
               },
               "distribution": "spaceBetween",
               "alignment": "center"
@@ -82,26 +121,21 @@
           }
         },
         {
-          "id": "txDesc",
+          "id": "txLeft",
           "component": {
-            "Column": {
+            "Row": {
               "children": {
-                "explicitList": [
-                  "txDescription",
-                  "txDate"
-                ]
-              }
+                "explicitList": ["txIcon", "txDate", "txDescription"]
+              },
+              "alignment": "center"
             }
           }
         },
         {
-          "id": "txDescription",
+          "id": "txIcon",
           "component": {
-            "Text": {
-              "text": {
-                "path": "description"
-              },
-              "usageHint": "body"
+            "Icon": {
+              "name": {"literalString": "shoppingCart"}
             }
           }
         },
@@ -109,10 +143,17 @@
           "id": "txDate",
           "component": {
             "Text": {
-              "text": {
-                "path": "formattedDate"
-              },
+              "text": {"path": "formattedDate"},
               "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "txDescription",
+          "component": {
+            "Text": {
+              "text": {"path": "description"},
+              "usageHint": "body"
             }
           }
         },
@@ -120,9 +161,7 @@
           "id": "txAmount",
           "component": {
             "Text": {
-              "text": {
-                "path": "amountDisplay"
-              },
+              "text": {"path": "amountDisplay"},
               "usageHint": "h5"
             }
           }

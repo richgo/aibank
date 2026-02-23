@@ -7,6 +7,7 @@
           "id": "root",
           "component": {
             "Column": {
+              "alignment": "stretch",
               "children": {
                 "explicitList": ["accountHeader", "detailsSection", "txHeader", "txList"]
               }
@@ -83,11 +84,29 @@
           "id": "txList",
           "component": {
             "Column": {
+              "alignment": "stretch",
               "children": {
                 "template": {
-                  "componentId": "txRow",
+                  "componentId": "txRowButton",
                   "dataBinding": "/transactions"
                 }
+              }
+            }
+          }
+        },
+        {
+          "id": "txRowButton",
+          "component": {
+            "Button": {
+              "child": "txRow",
+              "action": {
+                "name": "selectTransaction",
+                "context": [
+                  {"key": "transactionId", "value": {"path": "id"}},
+                  {"key": "description", "value": {"path": "description"}},
+                  {"key": "formattedDate", "value": {"path": "formattedDate"}},
+                  {"key": "amountDisplay", "value": {"path": "amountDisplay"}}
+                ]
               }
             }
           }
@@ -97,7 +116,7 @@
           "component": {
             "Row": {
               "children": {
-                "explicitList": ["txDesc", "txAmount"]
+                "explicitList": ["txLeft", "txAmount"]
               },
               "distribution": "spaceBetween",
               "alignment": "center"
@@ -105,21 +124,21 @@
           }
         },
         {
-          "id": "txDesc",
+          "id": "txLeft",
           "component": {
-            "Column": {
+            "Row": {
               "children": {
-                "explicitList": ["txDescription", "txDate"]
-              }
+                "explicitList": ["txIcon", "txDate", "txDescription"]
+              },
+              "alignment": "center"
             }
           }
         },
         {
-          "id": "txDescription",
+          "id": "txIcon",
           "component": {
-            "Text": {
-              "text": {"path": "description"},
-              "usageHint": "body"
+            "Icon": {
+              "name": {"literalString": "shoppingCart"}
             }
           }
         },
@@ -129,6 +148,15 @@
             "Text": {
               "text": {"path": "formattedDate"},
               "usageHint": "caption"
+            }
+          }
+        },
+        {
+          "id": "txDescription",
+          "component": {
+            "Text": {
+              "text": {"path": "description"},
+              "usageHint": "body"
             }
           }
         },
