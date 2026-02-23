@@ -32,12 +32,15 @@ All tasks in `tasks.md` should be checked off (`- [x]`).
      - REMOVED sections → delete the corresponding requirement
    - If no matching spec exists, create a new file in `openspec/specs/<capability>/spec.md` from the delta (stripping the ADDED/MODIFIED/REMOVED section headers).
 
-3. **Move the change to archive:**
-   ```
-   openspec/changes/<change-name>/
-   → openspec/changes/archive/<YYYY-MM-DD>-<change-name>/
-   ```
-   Create the `archive/` directory if it doesn't exist.
+3. **Move the change to archive** — this is a rename/relocate, not a copy:
+   1. Copy the entire `openspec/changes/<change-name>/` folder to:
+      ```
+      openspec/changes/archive/<YYYY-MM-DD>-<change-name>/
+      ```
+      Create the `archive/` directory if it doesn't exist.
+   2. **Delete** the original `openspec/changes/<change-name>/` folder in its entirety.
+
+   The source folder must not remain after archiving. Leaving it behind defeats the purpose of the archive step and will cause confusion about which changes are still active.
 
 4. **Report what was done.**
 
@@ -53,6 +56,7 @@ If the change has no `specs/` directory (tooling-only changes), skip the merge s
 
 ## Constraints
 
-- **DO NOT** delete any files permanently — always move to archive.
+- **DO NOT** delete the archive destination — the `openspec/changes/archive/` folder and its contents must be preserved permanently.
+- **DO** delete the source `openspec/changes/<change-name>/` folder after copying to archive — this is required, not optional.
 - **DO NOT** modify application source code.
 - **DO NOT** archive if tasks are incomplete unless the developer explicitly confirms.
