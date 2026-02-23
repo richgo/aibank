@@ -340,20 +340,25 @@ class _McpAppFrameWidgetState extends State<McpAppFrameWidget> {
     }
   }
 
-  // Clamp the bundled map app minimum camera height to 1km.
+  // Keep embedded map framing closer than upstream defaults and force
+  // ellipsoid terrain to avoid Ion-terrain stalls in embedded contexts.
   String _patchMapHtml(String html) {
     var patched = html;
     patched = patched.replaceAll(
+      RegExp(r'terrainProvider\s*:\s*void 0'),
+      'terrainProvider:new Cesium.EllipsoidTerrainProvider()',
+    );
+    patched = patched.replaceAll(
+      'I.info("Viewer created"),',
+      'I.info("Viewer created"),e.terrainProvider=new Cesium.EllipsoidTerrainProvider(),',
+    );
+    patched = patched.replaceAll(
       RegExp(r'Math\.max\(\s*(?:1[eE]5|100000)\s*,'),
-      'Math.max(1e3,',
+      'Math.max(1e4,',
     );
     patched = patched.replaceAllMapped(
       RegExp(r'Math\.max\(\s*([A-Za-z_$][\w$]*)\s*,\s*(?:5[eE]5|500000)\s*\)'),
-      (match) => 'Math.max(${match.group(1)},1e3)',
-    );
-    patched = patched.replaceAllMapped(
-      RegExp(r'Math\.max\(\s*([A-Za-z_$][\w$]*)\s*,\s*(?:5[eE]4|50000)\s*\)'),
-      (match) => 'Math.max(${match.group(1)},1e3)',
+      (match) => 'Math.max(${match.group(1)},5e4)',
     );
     return patched;
   }

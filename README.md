@@ -87,7 +87,7 @@ sequenceDiagram
   - **Web**: sandboxed iframe + `postMessage` relay to MCP JSON-RPC.
   - **Native**: WebView + JavaScript shim for `window.parent.postMessage`.
 - Added MCP UI-host handling (`ui/initialize`, `ui/request-display-mode`, `tools/list`, `tools/call`) in the frame bridge.
-- Patched the map app HTML before render to reduce minimum camera height for inline conversation use.
+- Uses a web-host fallback that renders direct OpenStreetMap tiles in the embedded MCP frame when Cesium rendering is unreliable.
 - Merged custom catalog items into the standard catalog with resilient component-name matching for namespaced items.
 
 ### Repository layout

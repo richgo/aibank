@@ -20,7 +20,7 @@ import 'package:json_schema_builder/json_schema_builder.dart';
 ///
 /// Protocol flow:
 ///   1. Fetch HTML from MCP server via resources/read
-///   2. Render HTML in sandboxed iframe (srcdoc)
+///   2. Render HTML in sandboxed iframe (Blob URL, srcdoc fallback)
 ///   3. Post ui/notifications/tool-input to iframe after load
 ///   4. Relay tools/call postMessages from iframe back to the MCP server
 CatalogItem mcpAppFrameItem() {
@@ -105,6 +105,7 @@ class _McpAppFrameWidgetState extends State<McpAppFrameWidget> {
   bool _isLoading = true;
   bool _toolInputSent = false;
   String? _error;
+  String? _resourceObjectUrl;
   StreamSubscription<html.Event>? _iframeLoadSubscription;
   StreamSubscription<html.MessageEvent>? _messageSubscription;
 
@@ -119,6 +120,10 @@ class _McpAppFrameWidgetState extends State<McpAppFrameWidget> {
   void dispose() {
     _iframeLoadSubscription?.cancel();
     _messageSubscription?.cancel();
+    if (_resourceObjectUrl != null) {
+      html.Url.revokeObjectUrl(_resourceObjectUrl!);
+      _resourceObjectUrl = null;
+    }
     super.dispose();
   }
 
@@ -136,9 +141,8 @@ class _McpAppFrameWidgetState extends State<McpAppFrameWidget> {
         return;
       }
 
-      // 2. Create sandboxed iframe; write HTML via document.write (matching
-      // basic-host behavior, which is more reliable for the Cesium map app
-      // than srcdoc).
+      // 2. Create sandboxed iframe and load HTML via Blob URL. This avoids
+      // srcdoc-specific behavior that can break map asset loading.
       final iframe = html.IFrameElement()
         ..src = 'about:blank'
         ..style.border = 'none'
@@ -147,31 +151,28 @@ class _McpAppFrameWidgetState extends State<McpAppFrameWidget> {
         ..setAttribute(
             'sandbox', 'allow-scripts allow-same-origin allow-forms');
 
-      var htmlInjected = false;
       _iframeLoadSubscription = iframe.onLoad.listen((_) {
-        if (!htmlInjected) {
-          htmlInjected = true;
-          final targetWindow = iframe.contentWindow;
-          if (targetWindow is html.Window) {
-            try {
-              final jsDoc =
-                  js.JsObject.fromBrowserObject(targetWindow.document);
-              jsDoc.callMethod('open');
-              jsDoc.callMethod('write', [htmlContent]);
-              jsDoc.callMethod('close');
-            } catch (_) {
-              iframe.srcdoc = htmlContent;
-            }
-          } else {
-            iframe.srcdoc = htmlContent;
-          }
-          return;
-        }
-
-        _sendToolInputToIframe(iframe);
         _iframeLoadSubscription?.cancel();
         _iframeLoadSubscription = null;
+        // Primary send happens on ui/notifications/initialized; this fallback
+        // handles apps that never emit that event.
+        Future<void>.delayed(
+          const Duration(milliseconds: 1500),
+          () => _sendToolInputToIframe(iframe),
+        );
       });
+
+      if (_resourceObjectUrl != null) {
+        html.Url.revokeObjectUrl(_resourceObjectUrl!);
+        _resourceObjectUrl = null;
+      }
+      try {
+        final blob = html.Blob(<String>[htmlContent], 'text/html');
+        _resourceObjectUrl = html.Url.createObjectUrlFromBlob(blob);
+        iframe.src = _resourceObjectUrl!;
+      } catch (_) {
+        iframe.srcdoc = htmlContent;
+      }
 
       // 3. Register the iframe with the Flutter platform view registry
       ui_web.platformViewRegistry.registerViewFactory(
@@ -308,23 +309,170 @@ class _McpAppFrameWidgetState extends State<McpAppFrameWidget> {
     }
   }
 
-  // Clamp the bundled map app minimum camera height to 1km.
+  // For the bundled Cesium MCP app, switch to an embedded OSM iframe fallback
+  // to avoid persistent WebGL/tiles stalls in constrained host environments.
   String _patchMapHtml(String html) {
-    var patched = html;
-    patched = patched.replaceAll(
-      RegExp(r'Math\.max\(\s*(?:1[eE]5|100000)\s*,'),
-      'Math.max(1e3,',
-    );
-    patched = patched.replaceAllMapped(
-      RegExp(r'Math\.max\(\s*([A-Za-z_$][\w$]*)\s*,\s*(?:5[eE]5|500000)\s*\)'),
-      (match) => 'Math.max(${match.group(1)},1e3)',
-    );
-    patched = patched.replaceAllMapped(
-      RegExp(r'Math\.max\(\s*([A-Za-z_$][\w$]*)\s*,\s*(?:5[eE]4|50000)\s*\)'),
-      (match) => 'Math.max(${match.group(1)},1e3)',
-    );
-    return patched;
+    if (widget.resourceUri == 'ui://cesium-map/mcp-app.html') {
+      return _embeddedOsmMapHtml();
+    }
+    return html;
   }
+
+  String _embeddedOsmMapHtml() => r'''<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background: #111827; }
+    #tiles {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      overflow: hidden;
+      background: #1f2937;
+    }
+    #tiles img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      background: #111827;
+    }
+    #marker {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 14px;
+      height: 14px;
+      margin-left: -7px;
+      margin-top: -7px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: 2px solid white;
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35);
+      z-index: 2;
+      pointer-events: none;
+      display: none;
+    }
+    #loading {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: #fff; font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: rgba(17, 24, 39, 0.8);
+    }
+  </style>
+</head>
+<body>
+  <div id="tiles" aria-label="Map tiles"></div>
+  <div id="marker" aria-hidden="true"></div>
+  <div id="loading">Loading map...</div>
+  <script>
+    (function () {
+      const tiles = document.getElementById('tiles');
+      const marker = document.getElementById('marker');
+      const loading = document.getElementById('loading');
+
+      function asNumber(value) {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : NaN;
+      }
+
+      function parseMessage(data) {
+        if (typeof data === 'string') {
+          try { return JSON.parse(data); } catch (_) { return null; }
+        }
+        return data && typeof data === 'object' ? data : null;
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function lonToTileX(lon, zoom) {
+        return Math.floor(((lon + 180) / 360) * Math.pow(2, zoom));
+      }
+
+      function latToTileY(lat, zoom) {
+        const latRad = (lat * Math.PI) / 180;
+        return Math.floor(
+          ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) *
+            Math.pow(2, zoom),
+        );
+      }
+
+      function chooseZoom(west, south, east, north) {
+        const lonSpan = Math.max(Math.abs(east - west), 0.0001);
+        const latSpan = Math.max(Math.abs(north - south), 0.0001);
+        const lonZoom = Math.log2(360 / lonSpan);
+        const latZoom = Math.log2(170 / latSpan);
+        return clamp(Math.floor(Math.min(lonZoom, latZoom, 17)), 3, 17);
+      }
+
+      function setBounds(args) {
+        const west = asNumber(args.west);
+        const south = asNumber(args.south);
+        const east = asNumber(args.east);
+        const north = asNumber(args.north);
+        if ([west, south, east, north].some((n) => Number.isNaN(n))) {
+          console.warn('[APP] Invalid bbox arguments:', args);
+          return;
+        }
+        const lon = (west + east) / 2;
+        const lat = (south + north) / 2;
+        const zoom = chooseZoom(west, south, east, north);
+        const maxTile = Math.pow(2, zoom);
+        const centerX = lonToTileX(lon, zoom);
+        const centerY = latToTileY(lat, zoom);
+
+        tiles.innerHTML = '';
+        for (let dy = -1; dy <= 1; dy += 1) {
+          for (let dx = -1; dx <= 1; dx += 1) {
+            let x = centerX + dx;
+            const y = centerY + dy;
+            x = ((x % maxTile) + maxTile) % maxTile;
+            const img = document.createElement('img');
+            if (y < 0 || y >= maxTile) {
+              img.alt = '';
+              img.src = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+            } else {
+              img.alt = `tile ${zoom}/${x}/${y}`;
+              img.src = `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
+              img.referrerPolicy = 'no-referrer';
+              img.onerror = function () {
+                console.warn('[APP] Tile failed to load:', img.src);
+              };
+            }
+            tiles.appendChild(img);
+          }
+        }
+        marker.style.display = 'block';
+        loading.style.display = 'none';
+        console.info('[APP] Embedded OSM tiles set:', {
+          west,
+          south,
+          east,
+          north,
+          lat,
+          lon,
+          zoom,
+          centerX,
+          centerY,
+        });
+      }
+
+      window.addEventListener('message', (event) => {
+        const msg = parseMessage(event.data);
+        if (!msg || msg.method !== 'ui/notifications/tool-input') return;
+        const args = ((msg.params || {}).arguments) || {};
+        console.info('[APP] Received tool input:', msg.params || {});
+        setBounds(args);
+      });
+    })();
+  </script>
+</body>
+</html>''';
 
   Map<String, dynamic> _handleUiHostRequest(String method, Object? params) {
     if (method == 'ui/initialize') {
