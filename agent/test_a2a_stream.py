@@ -12,6 +12,13 @@ def test_build_a2a_parts_contains_a2ui_dataparts():
     assert all(p['metadata']['mimeType'] == 'application/json+a2ui' for p in data_parts)
 
 
+def test_build_a2a_parts_omits_blank_text_for_account_detail():
+    response = handle_query('show current account')
+    parts = build_a2a_parts(response)
+    assert all(part['kind'] != 'text' for part in parts)
+    assert any(part['kind'] == 'data' for part in parts)
+
+
 def test_stream_endpoint_returns_ndjson_parts():
     client = TestClient(app)
     res = client.post('/a2a/message/stream', json={'message': 'show my accounts'})

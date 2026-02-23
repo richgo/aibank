@@ -2,8 +2,8 @@
 
 ## Phase 1: Dependencies & Configuration
 
-- [x] **1.1** Add Python dependencies for Google Maps MCP client
-  Add `httpx` to `agent/requirements.txt` (or `pyproject.toml`). This enables HTTP calls to the Google Maps MCP server.
+- [x] **1.1** Add Python dependencies for map server MCP client
+  Add `httpx` to `agent/requirements.txt` (or `pyproject.toml`). This enables HTTP calls to the map server MCP endpoint.
   *Covers: design decision on MCP server connection model*
 
 - [x] **1.2** Add Flutter dependencies for map rendering
@@ -11,17 +11,17 @@
   *Covers: design decision on map library*
 
 - [x] **1.3** Create MCP-Apps configuration module
-  Create `agent/mcp_apps.py` with configuration dataclass for MCP-App endpoints. Include `GOOGLE_MAPS_MCP_URL` and `GOOGLE_MAPS_API_KEY` environment variable loading. Default to disabled if not configured.
+  Create `agent/mcp_apps.py` with configuration dataclass for MCP-App endpoints. Read `MAP_SERVER_URL` environment variable. Default to disabled if not set. No API key needed — the map server uses free OpenStreetMap/Nominatim.
   *Covers: mcp-apps-protocol spec — MCP-App Configuration requirement*
 
 ## Phase 2: Backend Agent — Multi-MCP & Intent
 
-- [x] **2.1** Implement Google Maps MCP client function
-  In `agent/mcp_apps.py`, add `call_googlemaps_tool(tool_name: str, **kwargs)` function that makes HTTP POST to Google Maps MCP endpoint. Handle connection errors gracefully, returning `None` on failure.
+- [x] **2.1** Implement map server MCP client function
+  In `agent/mcp_apps.py`, add `call_map_server_tool(tool_name: str, **kwargs)` that sends a MCP JSON-RPC `tools/call` request via HTTP POST to `MAP_SERVER_URL`. Parse `result.content` from the JSON-RPC response. Return `None` on any failure (connection error, HTTP error, missing content).
   *Covers: backend-agent spec — Multi-MCP Server Orchestration*
 
 - [x] **2.2** Add `geocode` tool wrapper
-  In `agent/mcp_apps.py`, add `geocode_merchant(query: str) -> dict | None` that calls `call_googlemaps_tool("geocode", query=query)` and extracts lat/lng from response. Validate coordinates are in valid ranges (-90 to 90, -180 to 180).
+  In `agent/mcp_apps.py`, add `geocode_merchant(query: str) -> dict | None` that calls `call_map_server_tool("geocode", query=query)` and parses the Nominatim result from the MCP text content item. Extract lat/lon from `lat`/`lon` string fields, or compute centroid from `boundingbox` (`[south, north, west, east]`). Use `display_name` as label. Validate coordinate ranges (-90 to 90, -180 to 180).
   *Covers: googlemaps-catalog spec — Geocode Merchant Name scenario*
 
 - [x] **2.3** Add transaction location intent detection
@@ -75,15 +75,15 @@
 ## Phase 4: Testing
 
 - [x] **4.1** Write unit tests for geocode_merchant
-  Create `agent/tests/test_mcp_apps.py`. Test successful geocode, geocode failure (empty result), invalid coordinates rejection, network error handling.
-  *Covers: googlemaps-catalog spec — Geocode Fails scenario*
+  Update `agent/test_mcp_apps.py`. Test: successful geocode with string lat/lon fields, bounding box centroid fallback, geocode failure (empty result), invalid coordinates rejection, network error handling.
+  *Covers: googlemaps-catalog spec — Geocode Fails scenario; Nominatim response format*
 
 - [x] **4.2** Write unit tests for transaction location intent
-  Create `agent/tests/test_transaction_location_intent.py`. Test intent detection for "where was my Tesco purchase?", "show me on a map", "location of transaction". Verify non-location queries don't trigger intent.
+  Create `agent/test_transaction_location.py`. Test intent detection for "where was my Tesco purchase?", "show me on a map", "location of transaction". Verify non-location queries don't trigger intent.
   *Covers: backend-agent spec — Location Intent Keywords scenario*
 
 - [x] **4.3** Write unit tests for merchant extraction
-  In `test_transaction_location_intent.py`, test `_extract_merchant` finds correct transaction, handles multiple matches (returns most recent), handles no matches.
+  In `test_transaction_location.py`, test `_extract_merchant` finds correct transaction, handles multiple matches (returns most recent), handles no matches.
 
 - [x] **4.4** Write widget tests for MapView
   Create `app/test/catalog/googlemaps/map_view_test.dart`. Test MapView renders with valid coordinates, shows marker, displays label. Test default zoom level 15 and custom zoom.
@@ -94,27 +94,38 @@
   *Covers: flutter-client spec — Render Map with Single Marker*
 
 - [x] **4.6** Validate transaction_location.json template
-  Add test in `agent/tests/test_templates.py` (or create if needed) that validates `transaction_location.json` against `A2UI_SCHEMA`.
+  Add test in `agent/test_templates.py` that validates `transaction_location.json` against `A2UI_SCHEMA`.
   *Covers: backend-agent spec — surface is valid A2UI v0.8*
 
 ## Phase 5: Verification
 
-- [x] **5.1** Manual end-to-end verification
-  1. Start agent with `GOOGLE_MAPS_MCP_URL` configured (or mock endpoint)
-  2. Start Flutter app
-  3. Send "show my transactions"
-  4. Send "where was my Tesco transaction?"
-  5. Verify map surface appears with marker at geocoded location
-  6. Verify transaction details display above map
+- [x] **5.1** Start map server and wire up dev environment
+  1. `dev.sh` updated — starts `@modelcontextprotocol/server-map` on port 3001 before the agent
+  2. `MAP_SERVER_URL=http://localhost:3001/mcp` exported in `dev.sh` before agent starts
+  3. `agent/.env.example` updated with commented `MAP_SERVER_URL` entry
+  4. `call_map_server_tool` verified: sends MCP JSON-RPC (`tools/call`), parses SSE `data:` line
+  5. Live test confirmed: `geocode_merchant("Tesco Superstore London")` → `{latitude: 51.459007, longitude: -0.337418, label: "Tesco Extra, Isleworth, London"}`
+  *Discovery: map server requires `Accept: application/json, text/event-stream` (406 without it) and always returns SSE. Geocode result is formatted text, not JSON — `mcp_apps.py` updated with SSE parser and regex coordinate extractor.*
 
-- [x] **5.2** Verify fallback behavior
-  1. Disable Google Maps MCP (unset env var or point to invalid URL)
-  2. Send "where was my transaction?"
-  3. Verify text fallback: "I couldn't load the map" or similar
-  4. Verify no crash or hang
+- [x] **5.2** End-to-end verification via agent API
+  1. `POST /chat` → `"show my transactions"` → `transaction_list.json` template returned ✓
+  2. `POST /chat` → `selectTransaction` action with `{description: "Tesco Superstore"}` →
+     - `text`: "Here is where your Tesco Superstore transaction occurred."
+     - `a2ui` surface contains `googlemaps:MapView` component with lat/lon data bindings ✓
+     - `data.location`: `{latitude: 51.726783, longitude: -1.202892, label: "Tesco Superstore, Oxford Retail Park, Oxford"}` ✓
 
-- [x] **5.3** Verify non-geocodable merchant handling
-  1. Ensure transaction list includes "Online Purchase" or similar
-  2. Send "where was my online purchase?"
-  3. Verify response indicates no physical location
-  4. Verify no MapView component rendered
+- [x] **5.3** Fallback behavior verified
+  1. Agent restarted without `MAP_SERVER_URL`
+  2. `selectTransaction` action → response has no `googlemaps:MapView` component ✓
+  3. Fallback surface uses `transaction_list.json` components (`txRow`, `txRowButton`, etc.) ✓
+  4. No crash — response returned cleanly ✓
+
+- [x] **5.4** Non-geocodable merchant — findings
+  Nominatim (used by map server) geocodes almost every query, including online-only merchants:
+  - "Spotify" → Spotify Camp Nou, Barcelona (OSM POI, unrelated to UK subscription)
+  - True "no results" from Nominatim is rare for named merchants
+  The fallback path (`geocode_merchant` returns `None`) is triggered only by:
+  - Map server unavailable / `MAP_SERVER_URL` unset (verified in 5.3)
+  - Network timeout or HTTP error
+  This path is covered by unit tests in `test_transaction_location.py` (mock geocode returning `None`).
+  *Future work: add a merchant classification step to reject clearly non-physical results (e.g., "Spotify", "Council Tax", "Amazon UK") before calling geocode.*

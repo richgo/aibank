@@ -1,0 +1,36 @@
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /home/rj/.local/lib/python3.10/site-packages/mcp/cli/cli.py:236 in dev       │
+│                                                                              │
+│   233 │                                                                      │
+│   234 │   try:                                                               │
+│   235 │   │   # Import server to get dependencies                            │
+│ ❱ 236 │   │   server = _import_server(file, server_object)                   │
+│   237 │   │   if hasattr(server, "dependencies"):                            │
+│   238 │   │   │   with_packages = list(set(with_packages + server.dependenci │
+│   239                                                                        │
+│                                                                              │
+│ /home/rj/.local/lib/python3.10/site-packages/mcp/cli/cli.py:142 in           │
+│ _import_server                                                               │
+│                                                                              │
+│   139 │   │   sys.exit(1)                                                    │
+│   140 │                                                                      │
+│   141 │   module = importlib.util.module_from_spec(spec)                     │
+│ ❱ 142 │   spec.loader.exec_module(module)                                    │
+│   143 │                                                                      │
+│   144 │   # If no object specified, try common server names                  │
+│   145 │   if not server_object:                                              │
+│ in exec_module:883                                                           │
+│ in _call_with_frames_removed:241                                             │
+│                                                                              │
+│ /mnt/c/Users/richa/Documents/GitHub/aibank/mcp_server/mcp_server.py:9 in     │
+│ <module>                                                                     │
+│                                                                              │
+│     6 from mcp.server.stdio import stdio_server                              │
+│     7 from mcp.types import Tool, TextContent                                │
+│     8                                                                        │
+│ ❱   9 from .server import (                                                  │
+│    10 │   get_accounts,                                                      │
+│    11 │   get_account_detail,                                                │
+│    12 │   get_transactions,                                                  │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ImportError: attempted relative import with no known parent package

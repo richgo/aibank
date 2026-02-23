@@ -55,7 +55,12 @@ def _load_template(name: str) -> list[dict[str, Any]]:
 def handle_query(message: str) -> ChatResponse:
     runtime: RuntimeResponse = get_runtime().run(message)
     a2ui = _load_template(runtime.template_name)
+    surface_id = str(uuid.uuid4())
     for item in a2ui:
+        for message_key in ("surfaceUpdate", "dataModelUpdate", "beginRendering"):
+            payload = item.get(message_key)
+            if isinstance(payload, dict):
+                payload["surfaceId"] = surface_id
         update = item.get("dataModelUpdate")
         if isinstance(update, dict):
             # Pass data as a dict so DataModel uses its permissive Map path
@@ -66,7 +71,9 @@ def handle_query(message: str) -> ChatResponse:
 
 
 def build_a2a_parts(response: ChatResponse) -> list[dict[str, Any]]:
-    parts: list[dict[str, Any]] = [{"kind": "text", "text": response.text}]
+    parts: list[dict[str, Any]] = []
+    if response.text.strip():
+        parts.append({"kind": "text", "text": response.text})
     for message in response.a2ui:
         parts.append(
             {

@@ -2,11 +2,11 @@
   {"surfaceUpdate": {"surfaceId": "main_surface", "components": [
     {"id": "root", "component": {"Column": {"children": {"explicitList": ["txinfo", "map"]}}}},
     {"id": "txinfo", "component": {"Text": {"text": {"path": "/transaction/description"}}}},
-    {"id": "map", "component": {"googlemaps:MapView": {
-      "latitude": {"path": "/location/latitude"},
-      "longitude": {"path": "/location/longitude"},
-      "label": {"path": "/location/label"},
-      "zoom": 15
+    {"id": "map", "component": {"mcp:AppFrame": {
+      "mcpEndpointUrl": {"path": "/frame/mcpEndpointUrl"},
+      "resourceUri": {"path": "/frame/resourceUri"},
+      "toolName": {"path": "/frame/toolName"},
+      "toolInput": {"path": "/frame/toolInput"}
     }}}
   ]}},
   {"dataModelUpdate": {"surfaceId": "main_surface", "contents": []}},

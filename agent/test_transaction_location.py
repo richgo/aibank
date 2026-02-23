@@ -2,12 +2,31 @@
 BDD-style scenario tests for transaction location feature.
 Tests intent detection, merchant extraction, and runtime flow.
 """
+import json
 import os
 from unittest.mock import patch, MagicMock
 
 import pytest
 
 from agent.runtime import DeterministicRuntime
+
+
+# =============================================================================
+# Helpers
+# =============================================================================
+
+def _bbox_result(lat=51.5074, lon=-0.1278, label='Tesco Superstore',
+                 west=-0.5, south=51.0, east=0.5, north=52.0):
+    return {
+        'latitude': lat, 'longitude': lon, 'label': label,
+        'west': west, 'south': south, 'east': east, 'north': north,
+    }
+
+
+def _mock_config(url='http://localhost:3001/mcp'):
+    cfg = MagicMock()
+    cfg.map_server_url = url
+    return cfg
 
 
 # =============================================================================
@@ -155,45 +174,42 @@ def test_extract_merchant_case_insensitive():
 def test_runtime_transaction_location_flow():
     """
     Scenario: Cross-MCP Tool Orchestration
-    GIVEN the agent has access to bank MCP and Google Maps MCP
+    GIVEN the agent has access to bank MCP and map MCP
     WHEN the user asks "where was my Tesco transaction?"
     THEN the agent calls get_transactions on bank MCP
-    AND the agent calls geocode on Google Maps MCP with the merchant name
-    AND the agent combines results to construct the response
+    AND the agent calls geocode_with_bbox on map MCP with the merchant name
+    AND the agent combines results to construct the response with frame data
     """
     with patch('agent.runtime.call_tool') as mock_bank_tool:
-        with patch('agent.runtime.geocode_merchant') as mock_geocode:
-            # Setup bank MCP mock
-            mock_bank_tool.side_effect = lambda name, **kwargs: {
-                'get_accounts': [
-                    {'id': 'acc1', 'type': 'current', 'balance': '1000.00'}
-                ],
-                'get_transactions': [
-                    {'id': 'tx1', 'date': '2026-02-20', 'description': 'Tesco Superstore', 'amount': '45.32'}
-                ]
-            }.get(name, [])
+        with patch('agent.runtime.geocode_with_bbox') as mock_geocode:
+            with patch('agent.runtime.get_mcp_apps_config') as mock_cfg:
+                mock_cfg.return_value = _mock_config()
+                mock_bank_tool.side_effect = lambda name, **kwargs: {
+                    'get_accounts': [
+                        {'id': 'acc1', 'type': 'current', 'balance': '1000.00'}
+                    ],
+                    'get_transactions': [
+                        {'id': 'tx1', 'date': '2026-02-20', 'description': 'Tesco Superstore', 'amount': '45.32'}
+                    ]
+                }.get(name, [])
+                mock_geocode.return_value = _bbox_result(label='Tesco Superstore')
 
-            # Setup Google Maps MCP mock
-            mock_geocode.return_value = {
-                'latitude': 51.5074,
-                'longitude': -0.1278,
-                'label': 'Tesco Superstore'
-            }
+                runtime = DeterministicRuntime()
+                result = runtime.run("where was my Tesco transaction?")
 
-            runtime = DeterministicRuntime()
-            result = runtime.run("where was my Tesco transaction?")
+                # THEN the response uses transaction_location template
+                assert result.template_name == "transaction_location.json"
 
-            # THEN the response uses transaction_location template
-            assert result.template_name == "transaction_location.json"
+                # AND contains transaction data
+                assert 'transaction' in result.data
+                assert result.data['transaction']['description'] == 'Tesco Superstore'
 
-            # AND contains transaction data
-            assert 'transaction' in result.data
-            assert result.data['transaction']['description'] == 'Tesco Superstore'
-
-            # AND contains location data
-            assert 'location' in result.data
-            assert result.data['location']['latitude'] == 51.5074
-            assert result.data['location']['longitude'] == -0.1278
+                # AND contains frame data for MCP App iframe
+                assert 'frame' in result.data
+                assert result.data['frame']['toolName'] == 'show-map'
+                assert result.data['frame']['toolInput']['label'] == 'Tesco Superstore'
+                assert result.data['frame']['toolInput']['west'] == -0.5
+                assert result.data['frame']['mcpEndpointUrl'] == 'http://localhost:3001/mcp'
 
 
 def test_runtime_transaction_location_geocode_fails():
@@ -202,10 +218,10 @@ def test_runtime_transaction_location_geocode_fails():
     GIVEN a merchant name that cannot be geocoded
     WHEN the agent constructs the response
     THEN the agent responds with text indicating location is unavailable
-    AND no MapView component is rendered (falls back to text)
+    AND no mcp:AppFrame component is rendered (falls back to transaction list)
     """
     with patch('agent.runtime.call_tool') as mock_bank_tool:
-        with patch('agent.runtime.geocode_merchant') as mock_geocode:
+        with patch('agent.runtime.geocode_with_bbox') as mock_geocode:
             mock_bank_tool.side_effect = lambda name, **kwargs: {
                 'get_accounts': [{'id': 'acc1', 'type': 'current'}],
                 'get_transactions': [
@@ -220,5 +236,167 @@ def test_runtime_transaction_location_geocode_fails():
             result = runtime.run("where was my online purchase?")
 
             # Falls back - not using transaction_location template
-            # Should provide helpful text instead
-            assert "location" in result.text.lower() or "map" in result.text.lower() or result.template_name != "transaction_location.json"
+            assert result.template_name != "transaction_location.json"
+            assert "frame" not in result.data
+
+
+def test_user_action_select_transaction_uses_context_description():
+    with patch('agent.runtime.geocode_with_bbox') as mock_geocode:
+        with patch('agent.runtime.get_mcp_apps_config') as mock_cfg:
+            mock_cfg.return_value = _mock_config()
+            mock_geocode.return_value = _bbox_result(label='Tesco Superstore')
+
+            runtime = DeterministicRuntime()
+            action = json.dumps({
+                "userAction": {
+                    "name": "selectTransaction",
+                    "context": {
+                        "transactionId": "tx1",
+                        "description": "Tesco Superstore",
+                        "formattedDate": "20 Feb",
+                        "amountDisplay": "-£45.32",
+                    },
+                }
+            })
+            result = runtime.run(action)
+
+            assert result.template_name == "transaction_location.json"
+            assert result.data["transaction"]["id"] == "tx1"
+            assert result.data["transaction"]["description"] == "Tesco Superstore"
+            assert 'frame' in result.data
+            assert result.data['frame']['toolName'] == 'show-map'
+            mock_geocode.assert_called_once_with("Tesco Superstore")
+
+
+def test_user_action_select_transaction_supports_list_context():
+    with patch('agent.runtime.geocode_with_bbox') as mock_geocode:
+        with patch('agent.runtime.get_mcp_apps_config') as mock_cfg:
+            mock_cfg.return_value = _mock_config()
+            mock_geocode.return_value = _bbox_result(label='Tesco Superstore')
+
+            runtime = DeterministicRuntime()
+            action = json.dumps({
+                "userAction": {
+                    "name": "selectTransaction",
+                    "context": [
+                        {"key": "transactionId", "value": "tx1"},
+                        {"key": "description", "value": "Tesco Superstore"},
+                        {"key": "formattedDate", "value": "20 Feb"},
+                        {"key": "amountDisplay", "value": "-£45.32"},
+                    ],
+                }
+            })
+            result = runtime.run(action)
+
+            assert result.template_name == "transaction_location.json"
+            assert result.data["transaction"]["id"] == "tx1"
+            assert result.data["transaction"]["description"] == "Tesco Superstore"
+            assert result.data["transaction"]["formattedDate"] == "20 Feb"
+            assert result.data["transaction"]["amountDisplay"] == "-£45.32"
+            assert 'frame' in result.data
+            mock_geocode.assert_called_once_with("Tesco Superstore")
+
+
+def test_user_action_select_transaction_uses_transaction_id_when_description_missing():
+    with patch('agent.runtime.call_tool') as mock_bank_tool:
+        with patch('agent.runtime.geocode_with_bbox') as mock_geocode:
+            with patch('agent.runtime.get_mcp_apps_config') as mock_cfg:
+                mock_cfg.return_value = _mock_config()
+                mock_bank_tool.side_effect = lambda name, **kwargs: {
+                    'get_accounts': [{'id': 'acc1', 'type': 'current', 'name': 'Current Account'}],
+                    'get_transactions': [
+                        {'id': 'tx1', 'date': '2026-02-20', 'description': 'Tesco Superstore', 'amount': '45.32'}
+                    ],
+                }.get(name, [])
+                mock_geocode.return_value = _bbox_result(label='Tesco Superstore')
+
+                runtime = DeterministicRuntime()
+                action = json.dumps({
+                    "userAction": {
+                        "name": "selectTransaction",
+                        "context": {"transactionId": "tx1"},
+                    }
+                })
+                result = runtime.run(action)
+
+                assert result.template_name == "transaction_location.json"
+                assert result.data["transaction"]["description"] == "Tesco Superstore"
+                assert 'frame' in result.data
+                mock_geocode.assert_called_once_with("Tesco Superstore")
+
+
+def test_user_action_select_transaction_falls_back_when_geocode_fails():
+    with patch('agent.runtime.call_tool') as mock_bank_tool:
+        with patch('agent.runtime.geocode_with_bbox') as mock_geocode:
+            mock_bank_tool.side_effect = lambda name, **kwargs: {
+                'get_accounts': [{'id': 'acc1', 'type': 'current', 'name': 'Current Account'}],
+                'get_transactions': [
+                    {'id': 'tx1', 'date': '2026-02-20', 'description': 'Online Purchase', 'amount': '29.99'}
+                ],
+            }.get(name, [])
+            mock_geocode.return_value = None
+
+            runtime = DeterministicRuntime()
+            action = json.dumps({
+                "userAction": {
+                    "name": "selectTransaction",
+                    "context": {"transactionId": "tx1", "description": "Online Purchase"},
+                }
+            })
+            result = runtime.run(action)
+
+            assert result.template_name == "transaction_list.json"
+            assert "transactions" in result.data
+
+
+def test_user_action_select_transaction_falls_back_when_context_missing():
+    with patch('agent.runtime.call_tool') as mock_bank_tool:
+        with patch('agent.runtime.geocode_with_bbox') as mock_geocode:
+            mock_bank_tool.side_effect = lambda name, **kwargs: {
+                'get_accounts': [{'id': 'acc1', 'type': 'current', 'name': 'Current Account'}],
+                'get_transactions': [
+                    {'id': 'tx1', 'date': '2026-02-20', 'description': 'Tesco Superstore', 'amount': '45.32'}
+                ],
+            }.get(name, [])
+
+            runtime = DeterministicRuntime()
+            action = json.dumps({
+                "userAction": {
+                    "name": "selectTransaction",
+                    "context": {},
+                }
+            })
+            result = runtime.run(action)
+
+            assert result.template_name == "transaction_list.json"
+            assert "transactions" in result.data
+            mock_geocode.assert_not_called()
+
+
+def test_user_action_account_context_still_returns_account_detail():
+    with patch('agent.runtime.call_tool') as mock_bank_tool:
+        mock_bank_tool.side_effect = lambda name, **kwargs: {
+            'get_account_detail': {
+                'id': 'acc1',
+                'name': 'Current Account',
+                'balance': '1000.00',
+                'type': 'current',
+                'accountNumber': '12345678',
+                'sortCode': '12-34-56',
+            },
+            'get_transactions': [
+                {'id': 'tx1', 'date': '2026-02-20', 'description': 'Tesco Superstore', 'amount': '45.32'}
+            ],
+        }.get(name, [])
+
+        runtime = DeterministicRuntime()
+        action = json.dumps({
+            "userAction": {
+                "name": "selectAccount",
+                "context": {"accountId": "acc1"},
+            }
+        })
+        result = runtime.run(action)
+
+        assert result.template_name == "account_detail.json"
+        assert "transactions" in result.data

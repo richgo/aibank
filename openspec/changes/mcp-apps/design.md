@@ -2,7 +2,7 @@
 
 ## Overview
 
-This design introduces a multi-MCP architecture where the backend agent connects to both the internal bank MCP server and the external Google Maps MCP server. Components from external MCP-Apps use namespaced identifiers (`googlemaps:MapView`) to prevent catalog collisions. The Flutter client registers MCP-App components alongside internal banking components, enabling rich map-based transaction location display.
+This design introduces a multi-MCP architecture where the backend agent connects to both the internal bank MCP server and the external map server (`@modelcontextprotocol/server-map`). Components from external MCP-Apps use namespaced identifiers (`googlemaps:MapView`) to prevent catalog collisions. The Flutter client registers MCP-App components alongside internal banking components, enabling rich map-based transaction location display.
 
 ## Architecture
 
@@ -19,7 +19,7 @@ This design introduces a multi-MCP architecture where the backend agent connects
 
 | Component | File(s) | Purpose |
 |-----------|---------|---------|
-| MCP-App Config | `agent/mcp_apps.py` | MCP-App manifest loading and multi-server orchestration |
+| MCP-App Config | `agent/mcp_apps.py` | Map server connection config and multi-server orchestration |
 | Google Maps Catalog | `app/lib/catalog/googlemaps/map_view.dart` | `googlemaps:MapView` component implementation |
 | Transaction Location Template | `agent/templates/transaction_location.json` | A2UI template for map + transaction detail |
 
@@ -44,7 +44,17 @@ This design introduces a multi-MCP architecture where the backend agent connects
 - `google_maps_flutter` — rejected because it requires separate API key management, platform-specific setup (Android API key in manifest, iOS in Info.plist), and has stricter usage terms
 - `mapbox_gl` — rejected because it requires Mapbox access token and has usage-based pricing
 
-**Rationale:** `flutter_map` is BSD-licensed, works cross-platform with minimal setup, and can use free OpenStreetMap tiles. The Google Maps MCP provides geocoding data; we don't need Google's map tiles for display. This keeps the POC simple and cost-free.
+**Rationale:** `flutter_map` is BSD-licensed, works cross-platform with minimal setup, and can use free OpenStreetMap tiles. The map server provides geocoding data; we don't need proprietary map tiles for display. This keeps the POC simple and cost-free.
+
+### Decision: Map Rendering Approach
+
+**Chosen:** Call only the `geocode` tool; render the map natively in Flutter using `flutter_map`
+
+**Alternatives considered:**
+- Use the `show-map` tool + CesiumJS HTML UI (`ui://cesium-map/mcp-app.html`) — rejected because it requires embedding a WebView/iframe, adds cross-origin complexity, and breaks visual consistency with the native Flutter UI
+- Hybrid (geocode for coordinates, show-map for display) — rejected because the CesiumJS globe is overkill for a single-marker POC and WebView adds platform-specific configuration
+
+**Rationale:** The map server exposes two tools: `geocode` (Nominatim search, returns results with lat/lon and bounding boxes) and `show-map` (drives a 3D CesiumJS globe via the server's own MCP App HTML UI). We use only `geocode` to obtain coordinates and render the result ourselves. This keeps map rendering in-process, allows theming with `BankTheme`, and avoids the complexity of the MCP App HTML UI pattern.
 
 ### Decision: MCP-App Component Registration
 
@@ -58,7 +68,7 @@ This design introduces a multi-MCP architecture where the backend agent connects
 
 ### Decision: Multi-MCP Orchestration Pattern
 
-**Chosen:** Sequential orchestration in runtime — bank MCP first, then Google Maps MCP
+**Chosen:** Sequential orchestration in runtime — bank MCP first, then map server MCP
 
 **Alternatives considered:**
 - Parallel calls — rejected because geocoding depends on transaction data (merchant name)
@@ -68,13 +78,13 @@ This design introduces a multi-MCP architecture where the backend agent connects
 
 ### Decision: MCP Server Connection Model
 
-**Chosen:** Direct HTTP calls to Google Maps MCP endpoint (not stdio)
+**Chosen:** Direct HTTP calls to map server MCP endpoint using MCP JSON-RPC protocol
 
 **Alternatives considered:**
-- stdio subprocess like bank MCP — rejected because Google Maps MCP is an external service, not locally hosted
-- MCP client library — rejected because adds dependency for simple HTTP+JSON
+- stdio subprocess like bank MCP — rejected because the map server is a separate npm process, not a Python module
+- MCP client library — rejected because it adds a dependency for a straightforward HTTP+JSON-RPC call
 
-**Rationale:** Google Maps MCP exposes HTTP endpoints. A lightweight `httpx` call with JSON payload is sufficient. The internal bank MCP continues using stdio via the existing `call_tool` function.
+**Rationale:** The map server exposes a Streamable HTTP transport at `/mcp` (port 3001). We POST standard MCP JSON-RPC (`tools/call` method) and parse the `result.content` array. The internal bank MCP continues using stdio via the existing `call_tool` function.
 
 ## Data Flow
 
@@ -88,9 +98,10 @@ User: "Where was my Tesco transaction?"
 │  1. _intent() detects "transaction_location"                    │
 │  2. call_tool("get_transactions") → bank MCP (stdio)           │
 │  3. Filter transactions matching "Tesco"                        │
-│  4. call_googlemaps_tool("geocode", query="Tesco Superstore")  │
-│     → Google Maps MCP (HTTP)                                    │
-│  5. Returns RuntimeResponse(                                    │
+│  4. call_map_server_tool("geocode", query="Tesco Superstore")  │
+│     → map server MCP (HTTP POST /mcp, JSON-RPC tools/call)     │
+│  5. Parse Nominatim result: extract lat/lon or bbox centroid    │
+│  6. Returns RuntimeResponse(                                    │
 │       template_name="transaction_location.json",                │
 │       data={transaction: {...}, location: {lat, lng, label}}   │
 │     )                                                           │
@@ -163,6 +174,44 @@ The agent card at `/.well-known/agent-card.json` adds the Google Maps catalog to
 ]
 ```
 
+### Map Server Wire Protocol
+
+Tool calls use MCP JSON-RPC over HTTP POST to `MAP_SERVER_URL` (default: `http://localhost:3001/mcp`):
+
+```
+POST http://localhost:3001/mcp
+Content-Type: application/json
+Accept: application/json, text/event-stream   ← BOTH required; server returns 406 otherwise
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "geocode",
+    "arguments": {"query": "Tesco Superstore"}
+  }
+}
+```
+
+Response (always SSE format — `event:` / `data:` lines):
+```
+event: message
+data: {"result":{"content":[{"type":"text","text":"1. Tesco Extra, Mogden Lane, Isleworth, TW7 7JY\n   Coordinates: 51.459007, -0.337418\n   Bounding box: W:-0.3384, S:51.4585, E:-0.3367, N:51.4597\n\n2. ..."}]},"jsonrpc":"2.0","id":1}
+```
+
+Key wire-format properties (verified against live server):
+- The `Accept` header **must** include both `application/json` **and** `text/event-stream` — the server returns HTTP 406 with `application/json` alone
+- The server **always** returns SSE format (`event: message\ndata: <json>`), never plain JSON
+- The `geocode` tool returns **human-readable formatted text**, not a JSON array. Each result is:
+  ```
+  1. Place Name, Address
+     Coordinates: lat, lon
+     Bounding box: W:x, S:y, E:z, N:w
+  ```
+- We extract the first result's coordinates using a regex: `Coordinates:\s*([-\d.]+),\s*([-\d.]+)`
+- The first line of each result (after the number) is used as the map marker label
+
 ### Runtime Data Contract
 
 ```python
@@ -180,7 +229,7 @@ RuntimeResponse(
         "location": {
             "latitude": 51.5074,
             "longitude": -0.1278,
-            "label": "Tesco Superstore"
+            "label": "Tesco, London, UK"
         }
     }
 )
@@ -192,7 +241,7 @@ RuntimeResponse(
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `httpx` | ^0.27 | HTTP client for Google Maps MCP calls |
+| `httpx` | ^0.27 | HTTP client for map server MCP calls |
 
 ### Flutter (app)
 
@@ -200,6 +249,14 @@ RuntimeResponse(
 |---------|---------|---------|
 | `flutter_map` | ^6.0.0 | Map widget rendering |
 | `latlong2` | ^0.9.0 | Coordinate types for flutter_map |
+
+### Map server (dev / deployment)
+
+| Requirement | Detail |
+|-------------|--------|
+| Node.js / npx | To run `@modelcontextprotocol/server-map` |
+| No API key | Uses free OpenStreetMap / Nominatim — rate-limited to 1 req/sec |
+| `MAP_SERVER_URL` env var | Set to `http://localhost:3001/mcp` in development |
 
 ## Migration / Backwards Compatibility
 
@@ -209,6 +266,7 @@ RuntimeResponse(
 - Internal catalog items (`AccountCard`, `TransactionList`, etc.) are unaffected
 - The new `transaction_location` intent only triggers on specific keywords
 - Clients without the `googlemaps:MapView` component registered will fail gracefully (GenUI shows placeholder for unknown components)
+- If `MAP_SERVER_URL` is unset, `geocode_merchant()` returns `None` and the runtime falls back to the standard transaction list view
 
 ## Testing Strategy
 
@@ -220,11 +278,12 @@ RuntimeResponse(
 | MapView rendering | Widget | Verify FlutterMap renders with marker at given coords |
 | Geocode failure handling | Unit | Mock geocode error, verify no MapView in response |
 | Template validation | Unit | Validate `transaction_location.json` against A2UI schema |
+| Nominatim bbox centroid | Unit | Verify centroid computed correctly from bounding box |
 
 ### Test Files to Create
 
-- `agent/tests/test_mcp_apps.py` — Multi-MCP orchestration tests
-- `agent/tests/test_transaction_location_intent.py` — Intent detection tests
+- `agent/test_mcp_apps.py` — Multi-MCP orchestration and geocode parsing tests
+- `agent/test_transaction_location.py` — Intent detection and runtime flow tests
 - `app/test/catalog/googlemaps/map_view_test.dart` — MapView widget tests
 - `app/integration_test/transaction_location_test.dart` — E2E flow test
 
@@ -235,7 +294,7 @@ RuntimeResponse(
 **Scenario:** Transaction description is "Online Purchase" or "Direct Debit".
 
 **Handling:**
-1. Google Maps MCP returns empty results or error
+1. Map server returns empty results or error
 2. Runtime returns a text-only response: "This transaction doesn't have a physical location."
 3. No `transaction_location.json` template is used; falls back to standard transaction detail
 
@@ -248,19 +307,19 @@ RuntimeResponse(
 2. Response text clarifies: "Here is where your most recent Tesco transaction occurred (Feb 14)."
 3. Future enhancement: ask user to clarify which transaction
 
-### Google Maps MCP Unavailable
+### Map Server MCP Unavailable
 
-**Scenario:** Network error or MCP server down.
+**Scenario:** Network error, map server not started, or `MAP_SERVER_URL` not set.
 
 **Handling:**
-1. `call_googlemaps_tool()` raises exception
+1. `call_map_server_tool()` returns `None` (catches all exceptions)
 2. Runtime catches and returns fallback: "I couldn't load the map. Here are the transaction details."
 3. Uses `transaction_list.json` template instead
 4. No crash or hang in the agent
 
 ### Invalid Coordinates from Geocode
 
-**Scenario:** Geocode returns malformed lat/lng (null, out of range).
+**Scenario:** Geocode returns malformed lat/lng (null, out of range, non-numeric).
 
 **Handling:**
 1. Runtime validates coordinates before including in response

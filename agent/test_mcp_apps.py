@@ -1,41 +1,67 @@
 """
 BDD-style scenario tests for MCP-Apps Protocol spec.
 Each test corresponds to a Given/When/Then scenario from specs/mcp-apps-protocol/spec.md
+
+Wire protocol:
+  - map-server always returns SSE format: "event: message\ndata: <json>"
+  - geocode tool returns human-readable text: "1. Name\n   Coordinates: lat, lon\n   ..."
+  - Accept header must include both application/json AND text/event-stream
 """
+import json
 import os
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import patch, MagicMock
 import pytest
+
+
+# =============================================================================
+# Helpers
+# =============================================================================
+
+def _sse_response(content: list) -> str:
+    """Build an SSE response body as returned by the map server."""
+    data = {"result": {"content": content, "isError": False}, "jsonrpc": "2.0", "id": 1}
+    return f"event: message\ndata: {json.dumps(data)}\n\n"
+
+
+def _geocode_text(lat: str = "51.5074", lon: str = "-0.1278", name: str = "London, UK") -> str:
+    """Build formatted geocode text as returned by the map server."""
+    return (
+        f"1. {name}\n"
+        f"   Coordinates: {lat}, {lon}\n"
+        f"   Bounding box: W:-0.5, S:51.0, E:0.5, N:52.0"
+    )
+
+
+def _geocode_content(lat: str = "51.5074", lon: str = "-0.1278", name: str = "London, UK") -> list:
+    """Build a MCP content list with geocode text as returned by the map server."""
+    return [{"type": "text", "text": _geocode_text(lat, lon, name)}]
+
+
+def _mock_http_response(content: list) -> MagicMock:
+    """Build a mock httpx response that returns SSE body."""
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.text = _sse_response(content)
+    return mock_response
 
 
 # =============================================================================
 # Requirement: MCP-App Configuration
 # =============================================================================
 
-def test_google_maps_mcp_app_configured():
+def test_map_server_mcp_app_configured():
     """
-    Scenario: Google Maps MCP-App Configured
+    Scenario: Map Server MCP-App Configured
     GIVEN the agent deployment configuration
-    WHEN the Google Maps MCP-App is enabled
+    WHEN MAP_SERVER_URL is set
     THEN the configuration includes the MCP server endpoint URL
-    AND the configuration includes any required API keys
     """
-    # GIVEN environment variables are set
-    with patch.dict(os.environ, {
-        'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp',
-        'GOOGLE_MAPS_API_KEY': 'test-api-key-123'
-    }):
-        # WHEN we load the MCP-Apps configuration
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
         from agent.mcp_apps import get_mcp_apps_config
         config = get_mcp_apps_config()
 
-        # THEN the configuration includes the endpoint URL
-        assert config.google_maps_url == 'https://maps.example.com/mcp'
-
-        # AND the configuration includes the API key
-        assert config.google_maps_api_key == 'test-api-key-123'
-
-        # AND the Google Maps MCP-App is marked as enabled
-        assert config.google_maps_enabled is True
+        assert config.map_server_url == 'http://localhost:3001/mcp'
+        assert config.map_server_enabled is True
 
 
 def test_mcp_app_disabled_by_default():
@@ -46,197 +72,124 @@ def test_mcp_app_disabled_by_default():
     THEN no external MCP-Apps are connected
     AND the agent operates with internal MCP tools only
     """
-    # GIVEN no environment variables are set
     with patch.dict(os.environ, {}, clear=True):
-        # Remove any existing config env vars
-        for key in ['GOOGLE_MAPS_MCP_URL', 'GOOGLE_MAPS_API_KEY']:
-            os.environ.pop(key, None)
+        os.environ.pop('MAP_SERVER_URL', None)
 
-        # WHEN we load the MCP-Apps configuration
         from agent.mcp_apps import get_mcp_apps_config
         config = get_mcp_apps_config()
 
-        # THEN Google Maps MCP-App is disabled
-        assert config.google_maps_enabled is False
-
-        # AND the URL and key are None or empty
-        assert not config.google_maps_url
-        assert not config.google_maps_api_key
-
-
-# =============================================================================
-# Edge Cases for MCP-Apps Configuration
-# =============================================================================
-
-# Edge cases for get_mcp_apps_config:
-# - [ ] URL set but no API key → enabled (key optional for some endpoints)
-# - [ ] API key set but no URL → disabled (URL is required)
-# - [ ] Empty string URL → disabled
-# - [ ] Whitespace-only URL → disabled
-# - [ ] URL with trailing slash → normalized
-
-
-def test_config_url_set_without_api_key():
-    """
-    Edge case: URL set but no API key
-    Some MCP endpoints may not require API key authentication
-    """
-    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}, clear=True):
-        from agent.mcp_apps import get_mcp_apps_config
-        config = get_mcp_apps_config()
-
-        # Should still be enabled - key is optional
-        assert config.google_maps_enabled is True
-        assert config.google_maps_url == 'https://maps.example.com/mcp'
-        assert config.google_maps_api_key is None
-
-
-def test_config_api_key_without_url():
-    """
-    Edge case: API key set but no URL
-    Cannot call MCP without knowing the endpoint
-    """
-    with patch.dict(os.environ, {'GOOGLE_MAPS_API_KEY': 'test-key'}, clear=True):
-        from agent.mcp_apps import get_mcp_apps_config
-        config = get_mcp_apps_config()
-
-        # Should be disabled - URL is required
-        assert config.google_maps_enabled is False
+        assert config.map_server_enabled is False
+        assert not config.map_server_url
 
 
 def test_config_empty_url():
-    """
-    Edge case: Empty string URL
-    """
-    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': ''}, clear=True):
+    with patch.dict(os.environ, {'MAP_SERVER_URL': ''}, clear=True):
         from agent.mcp_apps import get_mcp_apps_config
         config = get_mcp_apps_config()
-
-        assert config.google_maps_enabled is False
+        assert config.map_server_enabled is False
 
 
 def test_config_whitespace_url():
-    """
-    Edge case: Whitespace-only URL
-    """
-    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': '   '}, clear=True):
+    with patch.dict(os.environ, {'MAP_SERVER_URL': '   '}, clear=True):
         from agent.mcp_apps import get_mcp_apps_config
         config = get_mcp_apps_config()
-
-        assert config.google_maps_enabled is False
+        assert config.map_server_enabled is False
 
 
 # =============================================================================
 # Requirement: Multi-MCP Server Orchestration (backend-agent spec)
 # =============================================================================
 
-def test_call_googlemaps_tool_success():
+def test_call_map_server_tool_success():
     """
-    Scenario: Agent Connects to Google Maps MCP
-    GIVEN the agent is configured with Google Maps MCP endpoint
-    WHEN the agent calls a tool on Google Maps MCP
-    THEN the tool response is returned successfully
+    Scenario: Agent Connects to Map Server MCP
+    GIVEN the agent is configured with the map server MCP endpoint
+    WHEN the agent calls a tool on the map server
+    THEN the MCP content items are returned from the SSE response
+    AND the request uses MCP JSON-RPC tools/call method
+    AND the Accept header includes both application/json and text/event-stream
     """
-    with patch.dict(os.environ, {
-        'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp',
-        'GOOGLE_MAPS_API_KEY': 'test-key'
-    }):
-        # Mock httpx response
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
         with patch('agent.mcp_apps.httpx') as mock_httpx:
-            mock_response = MagicMock()
-            mock_response.status_code = 200
-            mock_response.json.return_value = {
-                'result': {
-                    'latitude': 51.5074,
-                    'longitude': -0.1278,
-                    'formatted_address': 'London, UK'
-                }
-            }
-            mock_httpx.post.return_value = mock_response
+            mock_httpx.post.return_value = _mock_http_response(
+                _geocode_content()
+            )
 
-            from agent.mcp_apps import call_googlemaps_tool
-            result = call_googlemaps_tool('geocode', query='London')
+            from agent.mcp_apps import call_map_server_tool
+            result = call_map_server_tool('geocode', query='London')
 
-            # THEN the result contains the geocode response
             assert result is not None
-            assert result['latitude'] == 51.5074
-            assert result['longitude'] == -0.1278
+            assert isinstance(result, list)
+            assert result[0]['type'] == 'text'
+
+            call_args = mock_httpx.post.call_args
+            payload = call_args[1]['json']
+            assert payload['jsonrpc'] == '2.0'
+            assert payload['method'] == 'tools/call'
+            assert payload['params']['name'] == 'geocode'
+            assert payload['params']['arguments']['query'] == 'London'
+
+            headers = call_args[1]['headers']
+            assert 'text/event-stream' in headers['Accept']
+            assert 'application/json' in headers['Accept']
 
 
-def test_call_googlemaps_tool_connection_error():
+def test_call_map_server_tool_connection_error():
     """
-    Scenario: Google Maps MCP Unavailable
-    GIVEN the agent is configured with Google Maps MCP endpoint
+    Scenario: Map Server MCP Unavailable
+    GIVEN the agent is configured with map server endpoint
     WHEN the MCP server is unreachable
     THEN the function returns None (graceful failure)
     AND does not raise an exception
     """
-    with patch.dict(os.environ, {
-        'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp',
-    }):
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
         with patch('agent.mcp_apps.httpx') as mock_httpx:
-            import httpx
             mock_httpx.post.side_effect = Exception("Connection refused")
 
-            from agent.mcp_apps import call_googlemaps_tool
-            result = call_googlemaps_tool('geocode', query='London')
+            from agent.mcp_apps import call_map_server_tool
+            result = call_map_server_tool('geocode', query='London')
 
-            # THEN graceful failure - returns None
             assert result is None
 
 
-def test_call_googlemaps_tool_not_configured():
+def test_call_map_server_tool_not_configured():
     """
-    Edge case: Google Maps MCP not configured
-    GIVEN no GOOGLE_MAPS_MCP_URL is set
-    WHEN call_googlemaps_tool is called
-    THEN it returns None immediately
+    Edge case: Map server not configured
+    GIVEN no MAP_SERVER_URL is set
+    WHEN call_map_server_tool is called
+    THEN it returns None immediately without making any HTTP request
     """
     with patch.dict(os.environ, {}, clear=True):
-        from agent.mcp_apps import call_googlemaps_tool
-        result = call_googlemaps_tool('geocode', query='London')
-
+        from agent.mcp_apps import call_map_server_tool
+        result = call_map_server_tool('geocode', query='London')
         assert result is None
 
 
-# Edge cases for call_googlemaps_tool:
-# - [x] MCP not configured → returns None
-# - [x] Connection error → returns None
-# - [ ] HTTP 500 error → returns None
-# - [ ] Invalid JSON response → returns None
-# - [ ] Timeout → returns None
-
-
-def test_call_googlemaps_tool_http_error():
-    """
-    Edge case: HTTP 500 error from MCP server
-    """
-    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
+def test_call_map_server_tool_http_error():
+    """Edge case: HTTP 500 error from MCP server"""
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
         with patch('agent.mcp_apps.httpx') as mock_httpx:
             mock_response = MagicMock()
             mock_response.status_code = 500
-            mock_response.json.return_value = {'error': 'Internal server error'}
             mock_httpx.post.return_value = mock_response
 
-            from agent.mcp_apps import call_googlemaps_tool
-            result = call_googlemaps_tool('geocode', query='London')
+            from agent.mcp_apps import call_map_server_tool
+            result = call_map_server_tool('geocode', query='London')
 
             assert result is None
 
 
-def test_call_googlemaps_tool_invalid_json():
-    """
-    Edge case: Invalid JSON response from MCP server
-    """
-    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
+def test_call_map_server_tool_invalid_sse():
+    """Edge case: Response is not valid SSE / JSON"""
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
         with patch('agent.mcp_apps.httpx') as mock_httpx:
             mock_response = MagicMock()
             mock_response.status_code = 200
-            mock_response.json.side_effect = ValueError("Invalid JSON")
+            mock_response.text = "not sse format at all"
             mock_httpx.post.return_value = mock_response
 
-            from agent.mcp_apps import call_googlemaps_tool
-            result = call_googlemaps_tool('geocode', query='London')
+            from agent.mcp_apps import call_map_server_tool
+            result = call_map_server_tool('geocode', query='London')
 
             assert result is None
 
@@ -249,38 +202,55 @@ def test_geocode_merchant_success():
     """
     Scenario: Geocode Merchant Name
     GIVEN a transaction with description "Tesco Superstore"
-    WHEN the agent calls the geocode tool on Google Maps MCP
-    THEN the tool returns latitude and longitude for a Tesco location
-    AND the coordinates are suitable for display in MapView
+    WHEN the agent calls the geocode tool on the map server
+    THEN the tool returns latitude and longitude extracted from the text response
+    AND the display_name from the first result is used as the label
     """
-    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
-        with patch('agent.mcp_apps.call_googlemaps_tool') as mock_call:
-            mock_call.return_value = {
-                'latitude': 51.5074,
-                'longitude': -0.1278,
-                'formatted_address': 'Tesco Superstore, London'
-            }
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
+        with patch('agent.mcp_apps.call_map_server_tool') as mock_call:
+            mock_call.return_value = _geocode_content(
+                lat="51.5074", lon="-0.1278", name="Tesco Extra, Isleworth, London"
+            )
 
             from agent.mcp_apps import geocode_merchant
             result = geocode_merchant('Tesco Superstore')
 
-            # THEN coordinates are returned
             assert result is not None
-            assert result['latitude'] == 51.5074
-            assert result['longitude'] == -0.1278
-            assert result['label'] == 'Tesco Superstore'
+            assert result['latitude'] == pytest.approx(51.5074)
+            assert result['longitude'] == pytest.approx(-0.1278)
+            assert result['label'] == 'Tesco Extra, Isleworth, London'
 
 
-def test_geocode_merchant_fails():
+def test_geocode_merchant_multiple_results_uses_first():
     """
-    Scenario: Geocode Fails
-    GIVEN a merchant name that cannot be geocoded (e.g., "Online Purchase")
-    WHEN the agent calls the geocode tool
-    THEN the tool returns an error or empty result
-    AND the function returns None
+    Edge case: Geocode returns multiple results — first coordinates are used
     """
-    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
-        with patch('agent.mcp_apps.call_googlemaps_tool') as mock_call:
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
+        with patch('agent.mcp_apps.call_map_server_tool') as mock_call:
+            text = (
+                "1. Tesco Extra, Isleworth, TW7\n"
+                "   Coordinates: 51.459007, -0.337418\n"
+                "   Bounding box: W:-0.3384, S:51.4585, E:-0.3367, N:51.4597\n\n"
+                "2. Tesco, Lewisham, SE13\n"
+                "   Coordinates: 51.466403, -0.012478\n"
+                "   Bounding box: W:-0.0135, S:51.4659, E:-0.0118, N:51.4669"
+            )
+            mock_call.return_value = [{"type": "text", "text": text}]
+
+            from agent.mcp_apps import geocode_merchant
+            result = geocode_merchant('Tesco Superstore')
+
+            assert result is not None
+            assert result['latitude'] == pytest.approx(51.459007)
+            assert result['longitude'] == pytest.approx(-0.337418)
+
+
+def test_geocode_merchant_fails_no_content():
+    """
+    Scenario: Geocode Fails — call_map_server_tool returns None
+    """
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
+        with patch('agent.mcp_apps.call_map_server_tool') as mock_call:
             mock_call.return_value = None
 
             from agent.mcp_apps import geocode_merchant
@@ -289,24 +259,25 @@ def test_geocode_merchant_fails():
             assert result is None
 
 
-# Edge cases for geocode_merchant:
-# - [x] Successful geocode → returns {latitude, longitude, label}
-# - [x] Geocode fails → returns None
-# - [ ] Invalid coordinates (out of range) → returns None
-# - [ ] Missing latitude in response → returns None
-# - [ ] Missing longitude in response → returns None
+def test_geocode_merchant_no_coordinates_in_text():
+    """
+    Edge case: Text content has no 'Coordinates:' line
+    """
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
+        with patch('agent.mcp_apps.call_map_server_tool') as mock_call:
+            mock_call.return_value = [{"type": "text", "text": "No results found."}]
+
+            from agent.mcp_apps import geocode_merchant
+            result = geocode_merchant('Nowhere')
+
+            assert result is None
 
 
 def test_geocode_merchant_invalid_latitude():
-    """
-    Edge case: Latitude out of valid range (-90 to 90)
-    """
-    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
-        with patch('agent.mcp_apps.call_googlemaps_tool') as mock_call:
-            mock_call.return_value = {
-                'latitude': 200.0,  # Invalid
-                'longitude': -0.1278,
-            }
+    """Edge case: Latitude out of valid range (-90 to 90)"""
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
+        with patch('agent.mcp_apps.call_map_server_tool') as mock_call:
+            mock_call.return_value = _geocode_content(lat="200.0", lon="-0.1278")
 
             from agent.mcp_apps import geocode_merchant
             result = geocode_merchant('Invalid Place')
@@ -315,15 +286,10 @@ def test_geocode_merchant_invalid_latitude():
 
 
 def test_geocode_merchant_invalid_longitude():
-    """
-    Edge case: Longitude out of valid range (-180 to 180)
-    """
-    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
-        with patch('agent.mcp_apps.call_googlemaps_tool') as mock_call:
-            mock_call.return_value = {
-                'latitude': 51.5074,
-                'longitude': -300.0,  # Invalid
-            }
+    """Edge case: Longitude out of valid range (-180 to 180)"""
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
+        with patch('agent.mcp_apps.call_map_server_tool') as mock_call:
+            mock_call.return_value = _geocode_content(lat="51.5074", lon="-300.0")
 
             from agent.mcp_apps import geocode_merchant
             result = geocode_merchant('Invalid Place')
@@ -331,33 +297,97 @@ def test_geocode_merchant_invalid_longitude():
             assert result is None
 
 
-def test_geocode_merchant_missing_latitude():
-    """
-    Edge case: Response missing latitude field
-    """
-    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
-        with patch('agent.mcp_apps.call_googlemaps_tool') as mock_call:
-            mock_call.return_value = {
-                'longitude': -0.1278,
-            }
+def test_geocode_merchant_non_text_content_ignored():
+    """Edge case: Content item with type != 'text' is skipped"""
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
+        with patch('agent.mcp_apps.call_map_server_tool') as mock_call:
+            mock_call.return_value = [{"type": "image", "data": "base64..."}]
 
             from agent.mcp_apps import geocode_merchant
-            result = geocode_merchant('Incomplete')
+            result = geocode_merchant('Somewhere')
 
             assert result is None
 
 
-def test_geocode_merchant_missing_longitude():
-    """
-    Edge case: Response missing longitude field
-    """
-    with patch.dict(os.environ, {'GOOGLE_MAPS_MCP_URL': 'https://maps.example.com/mcp'}):
-        with patch('agent.mcp_apps.call_googlemaps_tool') as mock_call:
-            mock_call.return_value = {
-                'latitude': 51.5074,
-            }
+# =============================================================================
+# Requirement: Geocode with Bounding Box
+# =============================================================================
 
-            from agent.mcp_apps import geocode_merchant
-            result = geocode_merchant('Incomplete')
+def test_geocode_with_bbox_success():
+    """
+    Scenario: Geocode with bbox returns coordinates and bounding box
+    GIVEN a valid geocode response with bounding box
+    WHEN geocode_with_bbox is called
+    THEN the result includes latitude, longitude, label, west, south, east, north
+    """
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
+        with patch('agent.mcp_apps.call_map_server_tool') as mock_call:
+            mock_call.return_value = _geocode_content(
+                lat="51.459007", lon="-0.337418", name="Tesco Extra, Isleworth, London"
+            )
+
+            from agent.mcp_apps import geocode_with_bbox
+            result = geocode_with_bbox('Tesco Superstore')
+
+            assert result is not None
+            assert result['latitude'] == pytest.approx(51.459007)
+            assert result['longitude'] == pytest.approx(-0.337418)
+            assert result['label'] == 'Tesco Extra, Isleworth, London'
+            # Bounding box from _geocode_text default: W:-0.5, S:51.0, E:0.5, N:52.0
+            assert result['west'] == pytest.approx(-0.5)
+            assert result['south'] == pytest.approx(51.0)
+            assert result['east'] == pytest.approx(0.5)
+            assert result['north'] == pytest.approx(52.0)
+
+
+def test_geocode_with_bbox_fallback_when_no_bbox_line():
+    """
+    Edge case: Text has no Bounding box line — falls back to small bbox around point
+    """
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
+        with patch('agent.mcp_apps.call_map_server_tool') as mock_call:
+            mock_call.return_value = [{"type": "text", "text": (
+                "1. Some Place\n"
+                "   Coordinates: 51.5074, -0.1278\n"
+                "   (no bounding box)"
+            )}]
+
+            from agent.mcp_apps import geocode_with_bbox
+            result = geocode_with_bbox('Some Place')
+
+            assert result is not None
+            assert result['latitude'] == pytest.approx(51.5074)
+            assert result['longitude'] == pytest.approx(-0.1278)
+            # Fallback bbox: ±0.01 around the point
+            assert result['west'] == pytest.approx(-0.1378)
+            assert result['south'] == pytest.approx(51.4974)
+            assert result['east'] == pytest.approx(-0.1178)
+            assert result['north'] == pytest.approx(51.5174)
+
+
+def test_geocode_with_bbox_fails_no_content():
+    """
+    Scenario: Geocode with bbox fails — call_map_server_tool returns None
+    """
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
+        with patch('agent.mcp_apps.call_map_server_tool') as mock_call:
+            mock_call.return_value = None
+
+            from agent.mcp_apps import geocode_with_bbox
+            result = geocode_with_bbox('Online Purchase')
+
+            assert result is None
+
+
+def test_geocode_with_bbox_invalid_coords():
+    """
+    Edge case: Invalid coordinates are rejected even with valid bbox
+    """
+    with patch.dict(os.environ, {'MAP_SERVER_URL': 'http://localhost:3001/mcp'}):
+        with patch('agent.mcp_apps.call_map_server_tool') as mock_call:
+            mock_call.return_value = _geocode_content(lat="200.0", lon="-0.1278")
+
+            from agent.mcp_apps import geocode_with_bbox
+            result = geocode_with_bbox('Invalid Place')
 
             assert result is None
